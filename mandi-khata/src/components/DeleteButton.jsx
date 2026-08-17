@@ -1,8 +1,10 @@
 import { useApp } from '../context/AppContext';
+import { useLang } from '../i18n/LanguageContext';
 
 // Delete control that is disabled for Munshi with an explanatory tooltip.
-export default function DeleteButton({ onDelete, label = 'Delete' }) {
+export default function DeleteButton({ onDelete }) {
   const { role } = useApp();
+  const { t } = useLang();
   const isMalik = role === 'malik';
   return (
     <div className="group relative inline-block">
@@ -10,7 +12,7 @@ export default function DeleteButton({ onDelete, label = 'Delete' }) {
         type="button"
         disabled={!isMalik}
         onClick={isMalik ? onDelete : undefined}
-        aria-label={label}
+        aria-label={t('common.delete')}
         className={isMalik ? 'rounded-md p-2 text-red-500 hover:bg-red-50 hover:text-red-700' : 'rounded-md p-2 cursor-not-allowed text-gray-300'}
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
@@ -18,8 +20,8 @@ export default function DeleteButton({ onDelete, label = 'Delete' }) {
         </svg>
       </button>
       {!isMalik && (
-        <span className="pointer-events-none absolute -top-9 right-0 z-20 hidden whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1.5 text-xs text-white group-hover:block">
-          Only Malik can delete
+        <span className="pointer-events-none absolute -top-9 end-0 z-20 hidden whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1.5 text-xs text-white group-hover:block">
+          {t('common.onlyMalik')}
         </span>
       )}
     </div>

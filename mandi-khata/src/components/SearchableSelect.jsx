@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLang } from '../i18n/LanguageContext';
 
 // Touch-friendly searchable dropdown. options: [{ value, label, sublabel }]
-export default function SearchableSelect({ options, value, onChange, placeholder = 'Select…', error }) {
+export default function SearchableSelect({ options, value, onChange, placeholder, error }) {
+  const { t } = useLang();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const rootRef = useRef(null);
@@ -27,9 +29,9 @@ export default function SearchableSelect({ options, value, onChange, placeholder
       <button
         type="button"
         onClick={() => { setOpen(!open); setQuery(''); }}
-        className={`flex w-full items-center justify-between rounded-lg border bg-white px-4 py-3 text-left text-base ${error ? 'border-red-400' : 'border-gray-300'} ${selected ? 'text-gray-900' : 'text-gray-400'}`}
+        className={`flex w-full items-center justify-between rounded-lg border bg-white px-4 py-3 text-start text-base ${error ? 'border-red-400' : 'border-gray-300'} ${selected ? 'text-gray-900' : 'text-gray-400'}`}
       >
-        <span className="truncate">{selected ? selected.label : placeholder}</span>
+        <span className="truncate">{selected ? selected.label : placeholder || t('sale.selectPlaceholder')}</span>
         <svg className="h-5 w-5 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
       </button>
       {open && (
@@ -39,18 +41,18 @@ export default function SearchableSelect({ options, value, onChange, placeholder
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search…"
+              placeholder={t('common.search')}
               className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
             />
           </div>
           <ul className="max-h-56 overflow-y-auto py-1">
-            {filtered.length === 0 && <li className="px-4 py-3 text-sm text-gray-500">Koi party nahi mili</li>}
+            {filtered.length === 0 && <li className="px-4 py-3 text-sm text-gray-500">{t('common.noParty')}</li>}
             {filtered.map((o) => (
               <li key={o.value}>
                 <button
                   type="button"
                   onClick={() => { onChange(o.value); setOpen(false); }}
-                  className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-primary-50 ${o.value === value ? 'bg-primary-50 font-semibold text-primary-800' : 'text-gray-800'}`}
+                  className={`flex w-full items-center justify-between px-4 py-2.5 text-start text-sm hover:bg-primary-50 ${o.value === value ? 'bg-primary-50 font-semibold text-primary-800' : 'text-gray-800'}`}
                 >
                   <span>{o.label}</span>
                   {o.sublabel && <span className="text-xs text-gray-400">{o.sublabel}</span>}

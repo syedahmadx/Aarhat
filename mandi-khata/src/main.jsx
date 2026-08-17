@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 import { AppProvider, useApp } from './context/AppContext';
+import { LanguageProvider } from './i18n/LanguageContext';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import NewSale from './pages/NewSale';
@@ -38,10 +39,12 @@ function App() {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AppProvider>
-      <HashRouter>
-        <App />
-      </HashRouter>
-    </AppProvider>
+    <LanguageProvider>
+      <AppProvider>
+        <HashRouter>
+          <App />
+        </HashRouter>
+      </AppProvider>
+    </LanguageProvider>
   </StrictMode>
 );
