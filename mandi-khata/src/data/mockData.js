@@ -5,14 +5,14 @@ import { daysAgoISO } from '../utils/format';
 // negative = Dena (payable, we owe them). openingBalance is the balance
 // before any of the mock sales / cash entries below.
 export const initialParties = [
-  { id: 'p1', name: 'Haji Rafiq',          type: 'beopari',   phone: '0300-4571122', area: 'Ichhra',     openingBalance: -45000 },
-  { id: 'p2', name: 'Malik Shafqat',       type: 'beopari',   phone: '0321-8834455', area: 'Shadman',    openingBalance: 12000 },
-  { id: 'p3', name: 'Chaudhry Aslam',      type: 'beopari',   phone: '0333-2216677', area: 'Model Town', openingBalance: -78000 },
-  { id: 'p4', name: 'Rana Waseem',         type: 'beopari',   phone: '0345-9903311', area: 'Anarkali',   openingBalance: 0 },
-  { id: 'p5', name: 'Shahid Machli Wala',  type: 'khareedar', phone: '0301-7712233', area: 'Ichhra',     openingBalance: 95000 },
-  { id: 'p6', name: 'Akram Fish Corner',   type: 'khareedar', phone: '0322-5541199', area: 'Anarkali',   openingBalance: 34000 },
-  { id: 'p7', name: 'Bismillah Fish House',type: 'khareedar', phone: '0334-8890044', area: 'Shadman',    openingBalance: -15000 },
-  { id: 'p8', name: 'Karachi Sea Foods',   type: 'khareedar', phone: '0346-1123388', area: 'Model Town', openingBalance: 152000 },
+  { id: 'p1', name: 'Haji Rafiq', nameUr: 'حاجی رفیق',          type: 'beopari',   phone: '0300-4571122', area: 'Ichhra', areaUr: 'اچھرہ',     openingBalance: -45000 },
+  { id: 'p2', name: 'Malik Shafqat', nameUr: 'ملک شفقت',       type: 'beopari',   phone: '0321-8834455', area: 'Shadman', areaUr: 'شادمان',    openingBalance: 12000 },
+  { id: 'p3', name: 'Chaudhry Aslam', nameUr: 'چوہدری اسلم',      type: 'beopari',   phone: '0333-2216677', area: 'Model Town', areaUr: 'ماڈل ٹاؤن', openingBalance: -78000 },
+  { id: 'p4', name: 'Rana Waseem', nameUr: 'رانا وسیم',         type: 'beopari',   phone: '0345-9903311', area: 'Anarkali', areaUr: 'انارکلی',   openingBalance: 0 },
+  { id: 'p5', name: 'Shahid Machli Wala', nameUr: 'شاہد مچھلی والا',  type: 'khareedar', phone: '0301-7712233', area: 'Ichhra', areaUr: 'اچھرہ',     openingBalance: 95000 },
+  { id: 'p6', name: 'Akram Fish Corner', nameUr: 'اکرم فش کارنر',   type: 'khareedar', phone: '0322-5541199', area: 'Anarkali', areaUr: 'انارکلی',   openingBalance: 34000 },
+  { id: 'p7', name: 'Bismillah Fish House', nameUr: 'بسم اللہ فش ہاؤس',type: 'khareedar', phone: '0334-8890044', area: 'Shadman', areaUr: 'شادمان',    openingBalance: -15000 },
+  { id: 'p8', name: 'Karachi Sea Foods', nameUr: 'کراچی سی فوڈز',   type: 'khareedar', phone: '0346-1123388', area: 'Model Town', areaUr: 'ماڈل ٹاؤن', openingBalance: 152000 },
 ];
 
 export const FISH_TYPES = ['Rohu', 'Thaila', 'Jhinga', 'Mori', 'Silver Carp'];
@@ -72,20 +72,20 @@ export const initialSales = [
 ];
 
 let cashSeq = 1;
-function cash(dayOffset, time, partyId, direction, amount, note) {
-  return { id: `c${cashSeq++}`, date: daysAgoISO(dayOffset), time, partyId, direction, amount, note };
+function cash(dayOffset, time, partyId, direction, amount, note, noteUr) {
+  return { id: `c${cashSeq++}`, date: daysAgoISO(dayOffset), time, partyId, direction, amount, note, noteUr };
 }
 
 // direction: 'wasooli' = cash received from party, 'payment' = cash paid out to party
 export const initialCashEntries = [
-  cash(4, '11:30', 'p5', 'wasooli', 99000,  'Rohu sale wasooli'),
-  cash(4, '12:15', 'p1', 'payment', 92375,  'Payout for gaari LEB-4521'),
-  cash(3, '10:45', 'p6', 'wasooli', 54000,  'Jhinga full payment'),
-  cash(3, '13:00', 'p3', 'payment', 46575,  'Payout Jhinga lot'),
-  cash(2, '11:00', 'p5', 'wasooli', 39000,  'Partial against Silver Carp'),
-  cash(2, '12:30', 'p8', 'wasooli', 93600,  'Thaila lot cleared'),
-  cash(1, '10:15', 'p7', 'wasooli', 42000,  'Mori bill'),
-  cash(1, '12:00', 'p4', 'payment', 51900,  'Payout Thaila gaari RIM-9902'),
-  cash(0, '09:45', 'p5', 'wasooli', 51000,  'Thaila partial wasooli'),
-  cash(0, '10:30', 'p2', 'payment', 60000,  'Advance payout'),
+  cash(4, '11:30', 'p5', 'wasooli', 99000,  'Rohu sale wasooli', 'روہو سیل کی وصولی'),
+  cash(4, '12:15', 'p1', 'payment', 92375,  'Payout for gaari LEB-4521', 'گاڑی LEB-4521 کی ادائیگی'),
+  cash(3, '10:45', 'p6', 'wasooli', 54000,  'Jhinga full payment', 'جھینگا مکمل ادائیگی'),
+  cash(3, '13:00', 'p3', 'payment', 46575,  'Payout Jhinga lot', 'جھینگا لاٹ کی ادائیگی'),
+  cash(2, '11:00', 'p5', 'wasooli', 39000,  'Partial against Silver Carp', 'سلور کارپ کے خلاف جزوی'),
+  cash(2, '12:30', 'p8', 'wasooli', 93600,  'Thaila lot cleared', 'تھیلا لاٹ کلیئر'),
+  cash(1, '10:15', 'p7', 'wasooli', 42000,  'Mori bill', 'موری کا بل'),
+  cash(1, '12:00', 'p4', 'payment', 51900,  'Payout Thaila gaari RIM-9902', 'تھیلا گاڑی RIM-9902 کی ادائیگی'),
+  cash(0, '09:45', 'p5', 'wasooli', 51000,  'Thaila partial wasooli', 'تھیلا جزوی وصولی'),
+  cash(0, '10:30', 'p2', 'payment', 60000,  'Advance payout', 'ایڈوانس ادائیگی'),
 ];

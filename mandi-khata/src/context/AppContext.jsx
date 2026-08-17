@@ -43,18 +43,22 @@ export function AppProvider({ children }) {
       const p = partyById(partyId);
       if (!p) return [];
       const rows = [];
+      // Rows carry a translation key + params rather than a baked English
+      // string, so the khata renders in whichever language is active.
       for (const s of sales) {
         if (s.khareedarId === partyId) {
           rows.push({
             id: `sale-${s.id}`, date: s.date, time: s.time,
-            description: `${s.fishType} ${s.weight}kg @ Rs.${s.rate} (Gaari ${s.gaari})`,
+            descKey: 'kd.saleDesc',
+            descParams: { fish: s.fishType, weight: s.weight, rate: s.rate, gaari: s.gaari },
             debit: s.gross, credit: 0, status: s.status,
           });
         }
         if (s.beopariId === partyId) {
           rows.push({
             id: `sale-b-${s.id}`, date: s.date, time: s.time,
-            description: `Net payout — ${s.fishType} ${s.weight}kg (Gaari ${s.gaari})`,
+            descKey: 'kd.payoutDesc',
+            descParams: { fish: s.fishType, weight: s.weight, gaari: s.gaari },
             debit: 0, credit: s.netPayout, status: s.status,
           });
         }
@@ -63,7 +67,7 @@ export function AppProvider({ children }) {
         if (c.partyId === partyId) {
           rows.push({
             id: `cash-${c.id}`, date: c.date, time: c.time,
-            description: c.direction === 'wasooli' ? `Wasooli${c.note ? ' — ' + c.note : ''}` : `Payment${c.note ? ' — ' + c.note : ''}`,
+            cash: c,
             debit: c.direction === 'payment' ? c.amount : 0,
             credit: c.direction === 'wasooli' ? c.amount : 0,
           });

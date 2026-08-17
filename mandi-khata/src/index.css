@@ -2,6 +2,7 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-urdu: "Noto Nastaliq Urdu", "Noto Naskh Arabic", serif;
   --color-primary-50: #eef7f7;
   --color-primary-100: #d5ecec;
   --color-primary-200: #aed9da;
@@ -17,3 +18,29 @@
 
 html { font-family: var(--font-sans); }
 body { background-color: #f4f6f8; }
+
+/* Urdu mode: Nastaliq needs a taller line box and a little extra breathing
+   room, otherwise descenders clip inside buttons, badges and table cells. */
+[dir="rtl"] {
+  font-family: var(--font-urdu);
+  line-height: 2;
+}
+
+[dir="rtl"] button,
+[dir="rtl"] a,
+[dir="rtl"] th,
+[dir="rtl"] td,
+[dir="rtl"] label,
+[dir="rtl"] input,
+[dir="rtl"] select,
+[dir="rtl"] option {
+  line-height: 2;
+}
+
+/* Nastaliq sits small at a given px size; nudge the tightest UI text up. */
+[dir="rtl"] .text-xs { font-size: 0.8rem; }
+[dir="rtl"] .text-\[10px\] { font-size: 0.7rem; }
+
+/* Keep Latin-script content (amounts, gaari numbers, phone numbers, dates)
+   in Inter even while the surrounding UI is Nastaliq. */
+.latin { font-family: var(--font-sans); line-height: 1.4; }

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useLang } from '../i18n/LanguageContext';
 import { FISH_TYPES, EXPENSE_TYPES } from '../data/mockData';
-import { formatRs, todayISO } from '../utils/format';
+import { todayISO } from '../utils/format';
 import SearchableSelect from '../components/SearchableSelect';
 
 const inputCls = (err) =>
@@ -20,6 +21,7 @@ function Field({ label, error, children }) {
 
 export default function NewSale() {
   const { parties, addSale, showToast } = useApp();
+  const { t, fmt, partyName, partyArea } = useLang();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -35,8 +37,8 @@ export default function NewSale() {
   const [expenses, setExpenses] = useState([]);
   const [errors, setErrors] = useState({});
 
-  const beoparis = parties.filter((p) => p.type === 'beopari').map((p) => ({ value: p.id, label: p.name, sublabel: p.area }));
-  const khareedars = parties.filter((p) => p.type === 'khareedar').map((p) => ({ value: p.id, label: p.name, sublabel: p.area }));
+  const beoparis = parties.filter((p) => p.type === 'beopari').map((p) => ({ value: p.id, label: partyName(p), sublabel: partyArea(p) }));
+  const khareedars = parties.filter((p) => p.type === 'khareedar').map((p) => ({ value: p.id, label: partyName(p), sublabel: partyArea(p) }));
 
   const set = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -60,24 +62,24 @@ export default function NewSale() {
 
   function validate() {
     const e = {};
-    if (!form.date) e.date = 'Date zaroori hai';
-    if (!form.gaari.trim()) e.gaari = 'Gaari number zaroori hai';
-    if (!form.beopariId) e.beopariId = 'Beopari select karein';
-    if (!form.khareedarId) e.khareedarId = 'Khareedar select karein';
-    if (!form.fishType) e.fishType = 'Fish type select karein';
+    if (!form.date) e.date = t('err.date');
+    if (!form.gaari.trim()) e.gaari = t('err.gaari');
+    if (!form.beopariId) e.beopariId = t('err.beopari');
+    if (!form.khareedarId) e.khareedarId = t('err.khareedar');
+    if (!form.fishType) e.fishType = t('err.fishType');
     const weight = parseFloat(form.weight);
-    if (form.weight === '' || Number.isNaN(weight)) e.weight = 'Weight zaroori hai';
-    else if (weight <= 0) e.weight = 'Weight 0 se zyada hona chahiye';
+    if (form.weight === '' || Number.isNaN(weight)) e.weight = t('err.weightReq');
+    else if (weight <= 0) e.weight = t('err.weightPos');
     const rate = parseFloat(form.rate);
-    if (form.rate === '' || Number.isNaN(rate)) e.rate = 'Rate zaroori hai';
-    else if (rate <= 0) e.rate = 'Rate 0 se zyada hona chahiye';
+    if (form.rate === '' || Number.isNaN(rate)) e.rate = t('err.rateReq');
+    else if (rate <= 0) e.rate = t('err.ratePos');
     const pct = parseFloat(form.commissionPct);
-    if (form.commissionPct === '' || Number.isNaN(pct)) e.commissionPct = 'Commission % zaroori hai';
-    else if (pct < 0) e.commissionPct = 'Commission negative nahi ho sakta';
+    if (form.commissionPct === '' || Number.isNaN(pct)) e.commissionPct = t('err.commissionReq');
+    else if (pct < 0) e.commissionPct = t('err.commissionNeg');
     expenses.forEach((x, i) => {
       const amt = parseFloat(x.amount);
-      if (x.amount === '' || Number.isNaN(amt)) e[`exp${i}`] = 'Amount likhein';
-      else if (amt < 0) e[`exp${i}`] = 'Negative amount allowed nahi';
+      if (x.amount === '' || Number.isNaN(amt)) e[`exp${i}`] = t('err.amountReq');
+      else if (amt < 0) e[`exp${i}`] = t('err.amountNeg');
     });
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -86,7 +88,7 @@ export default function NewSale() {
   function onSave(ev) {
     ev.preventDefault();
     if (!validate()) {
-      showToast('Form mein ghaltiyan hain — check karein', 'error');
+      showToast(t('toast.formErrors'), 'error');
       return;
     }
     addSale({
@@ -100,7 +102,7 @@ export default function NewSale() {
       commissionPct: parseFloat(form.commissionPct),
       expenses: expenses.map((x) => ({ type: x.type, amount: parseFloat(x.amount) })),
     });
-    showToast('Sale save ho gayi — Roznamcha mein shamil');
+    showToast(t('toast.saleSaved'));
     navigate('/roznamcha');
   }
 
@@ -108,60 +110,60 @@ export default function NewSale() {
     <form onSubmit={onSave} className="grid gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
         <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-base font-bold text-gray-900">Sale ki Tafseel</h2>
+          <h2 className="mb-4 text-base font-bold text-gray-900">{t('sale.details')}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Date" error={errors.date}>
-              <input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} className={inputCls(errors.date)} />
+            <Field label={t('sale.date')} error={errors.date}>
+              <input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} className={inputCls(errors.date) + ' latin'} />
             </Field>
-            <Field label="Gaari Number" error={errors.gaari}>
-              <input type="text" placeholder="e.g. LEB-4521" value={form.gaari} onChange={(e) => set('gaari', e.target.value)} className={inputCls(errors.gaari)} />
+            <Field label={t('sale.gaari')} error={errors.gaari}>
+              <input type="text" placeholder={t('sale.egGaari')} value={form.gaari} onChange={(e) => set('gaari', e.target.value)} className={inputCls(errors.gaari) + ' latin'} />
             </Field>
-            <Field label="Beopari (Supplier)" error={errors.beopariId}>
-              <SearchableSelect options={beoparis} value={form.beopariId} onChange={(v) => set('beopariId', v)} placeholder="Beopari select karein" error={errors.beopariId} />
+            <Field label={t('sale.beopari')} error={errors.beopariId}>
+              <SearchableSelect options={beoparis} value={form.beopariId} onChange={(v) => set('beopariId', v)} placeholder={t('sale.selectBeopari')} error={errors.beopariId} />
             </Field>
-            <Field label="Khareedar (Buyer)" error={errors.khareedarId}>
-              <SearchableSelect options={khareedars} value={form.khareedarId} onChange={(v) => set('khareedarId', v)} placeholder="Khareedar select karein" error={errors.khareedarId} />
+            <Field label={t('sale.khareedar')} error={errors.khareedarId}>
+              <SearchableSelect options={khareedars} value={form.khareedarId} onChange={(v) => set('khareedarId', v)} placeholder={t('sale.selectKhareedar')} error={errors.khareedarId} />
             </Field>
-            <Field label="Fish Type" error={errors.fishType}>
+            <Field label={t('sale.fishType')} error={errors.fishType}>
               <select value={form.fishType} onChange={(e) => set('fishType', e.target.value)} className={inputCls(errors.fishType)}>
-                <option value="">Select karein</option>
-                {FISH_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
+                <option value="">{t('sale.selectPlaceholder')}</option>
+                {FISH_TYPES.map((f) => <option key={f} value={f}>{t(`fish.${f}`)}</option>)}
               </select>
             </Field>
-            <Field label="Weight (kg)" error={errors.weight}>
-              <input type="number" min="0" step="0.5" placeholder="e.g. 150" value={form.weight} onChange={(e) => set('weight', e.target.value)} className={inputCls(errors.weight)} />
+            <Field label={t('sale.weight')} error={errors.weight}>
+              <input type="number" min="0" step="0.5" placeholder={t('sale.egWeight')} value={form.weight} onChange={(e) => set('weight', e.target.value)} className={inputCls(errors.weight) + ' latin'} />
             </Field>
-            <Field label="Rate (Rs. per kg)" error={errors.rate}>
-              <input type="number" min="0" step="1" placeholder="e.g. 450" value={form.rate} onChange={(e) => set('rate', e.target.value)} className={inputCls(errors.rate)} />
+            <Field label={t('sale.rate')} error={errors.rate}>
+              <input type="number" min="0" step="1" placeholder={t('sale.egRate')} value={form.rate} onChange={(e) => set('rate', e.target.value)} className={inputCls(errors.rate) + ' latin'} />
             </Field>
-            <Field label="Commission %" error={errors.commissionPct}>
-              <input type="number" min="0" step="0.25" value={form.commissionPct} onChange={(e) => set('commissionPct', e.target.value)} className={inputCls(errors.commissionPct)} />
+            <Field label={t('sale.commissionPct')} error={errors.commissionPct}>
+              <input type="number" min="0" step="0.25" value={form.commissionPct} onChange={(e) => set('commissionPct', e.target.value)} className={inputCls(errors.commissionPct) + ' latin'} />
             </Field>
           </div>
         </div>
 
         <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-bold text-gray-900">Kharcha (Expenses)</h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-bold text-gray-900">{t('sale.expenses')}</h2>
             <button type="button" onClick={addExpenseRow} className="rounded-lg bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-100">
-              + Kharcha Add Karein
+              {t('sale.addExpense')}
             </button>
           </div>
-          {expenses.length === 0 && <p className="text-sm text-gray-400">Koi kharcha add nahi hua.</p>}
+          {expenses.length === 0 && <p className="text-sm text-gray-400">{t('sale.noExpenses')}</p>}
           <div className="space-y-3">
             {expenses.map((x, i) => (
               <div key={i}>
                 <div className="flex items-center gap-2">
-                  <select value={x.type} onChange={(e) => setExpense(i, 'type', e.target.value)} className="w-40 rounded-lg border border-gray-300 bg-white px-3 py-3 text-base outline-none focus:border-primary-500">
-                    {EXPENSE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  <select value={x.type} onChange={(e) => setExpense(i, 'type', e.target.value)} className="w-40 shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-3 text-base outline-none focus:border-primary-500">
+                    {EXPENSE_TYPES.map((ty) => <option key={ty} value={ty}>{t(`exp.${ty}`)}</option>)}
                   </select>
                   <input
-                    type="number" min="0" placeholder="Amount (Rs.)"
+                    type="number" min="0" placeholder={t('sale.amount')}
                     value={x.amount}
                     onChange={(e) => { setExpense(i, 'amount', e.target.value); setErrors((er) => ({ ...er, [`exp${i}`]: undefined })); }}
-                    className={inputCls(errors[`exp${i}`]) + ' flex-1'}
+                    className={inputCls(errors[`exp${i}`]) + ' latin flex-1'}
                   />
-                  <button type="button" onClick={() => removeExpense(i)} aria-label="Remove expense" className="rounded-md p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
+                  <button type="button" onClick={() => removeExpense(i)} aria-label={t('sale.removeExpense')} className="shrink-0 rounded-md p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
@@ -174,29 +176,29 @@ export default function NewSale() {
 
       <div className="lg:col-span-1">
         <div className="sticky top-20 rounded-xl border border-primary-100 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-base font-bold text-gray-900">Hisaab</h2>
+          <h2 className="mb-4 text-base font-bold text-gray-900">{t('sale.calcTitle')}</h2>
           <dl className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-gray-500">Gross Amount</dt>
-              <dd className="font-semibold text-gray-900">{formatRs(calc.gross)}</dd>
+            <div className="flex justify-between gap-2">
+              <dt className="text-gray-500">{t('sale.gross')}</dt>
+              <dd className="latin font-semibold text-gray-900">{fmt.rs(calc.gross)}</dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">Commission ({form.commissionPct || 0}%)</dt>
-              <dd className="font-semibold text-amber-700">- {formatRs(calc.commission)}</dd>
+            <div className="flex justify-between gap-2">
+              <dt className="text-gray-500">{t('sale.commissionAt', { pct: form.commissionPct || 0 })}</dt>
+              <dd className="latin font-semibold text-amber-700">- {fmt.rs(calc.commission)}</dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">Total Kharcha</dt>
-              <dd className="font-semibold text-red-600">- {formatRs(calc.totalExpenses)}</dd>
+            <div className="flex justify-between gap-2">
+              <dt className="text-gray-500">{t('sale.totalExpenses')}</dt>
+              <dd className="latin font-semibold text-red-600">- {fmt.rs(calc.totalExpenses)}</dd>
             </div>
           </dl>
           <div className="mt-4 rounded-lg bg-primary-900 px-4 py-4 text-center">
-            <p className="text-xs font-medium uppercase tracking-wide text-primary-300">Net Payout (Beopari ko)</p>
-            <p className="mt-1 text-3xl font-extrabold text-white">{formatRs(calc.net)}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-primary-300">{t('sale.netPayout')}</p>
+            <p className="latin mt-1 text-3xl font-extrabold text-white">{fmt.rs(calc.net)}</p>
           </div>
           <button type="submit" className="mt-4 w-full rounded-lg bg-primary-700 px-4 py-3.5 text-base font-bold text-white hover:bg-primary-800">
-            Sale Save Karein
+            {t('sale.save')}
           </button>
-          <p className="mt-2 text-center text-xs text-gray-400">Save hone par status "Pending" hoga</p>
+          <p className="mt-2 text-center text-xs text-gray-400">{t('sale.pendingNote')}</p>
         </div>
       </div>
     </form>
