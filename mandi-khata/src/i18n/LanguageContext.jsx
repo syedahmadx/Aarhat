@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { translations, MONTHS, MERIDIEM } from './translations';
+import { formatPKR, formatKg } from '../utils/money';
 
 const LanguageContext = createContext(null);
 
@@ -27,14 +28,29 @@ export function LanguageProvider({ children }) {
 
   // Locale-aware formatters. Digits stay Latin in both languages — Pakistani
   // commerce writes amounts as 1,25,000 regardless of script.
-  const fmt = useMemo(
-    () => ({
-      rs(amount) {
-        const n = Math.round(Math.abs(amount || 0)).toLocaleString('en-IN');
-        return lang === 'ur' ? `${n} روپے` : `Rs. ${n}`;
+  //
+  // Every currency string in the app is produced here, by formatPKR. No
+  // component formats an amount itself, and nothing here does arithmetic on
+  // one — the only transformation is swapping the currency word for Urdu.
+  const fmt = useMemo(() => {
+    const rs = (paisa) => {
+      const en = formatPKR(paisa || 0); // "Rs. 1,25,000.00" or "-Rs. 1,25,000.00"
+      if (lang !== 'ur') return en;
+      const negative = en.startsWith('-');
+      return `${negative ? '-' : ''}${en.replace(/^-?Rs\.\s*/, '')} روپے`;
+    };
+    return {
+      rs,
+      // Bare grouped digits, no currency word — for chart labels and axes.
+      num(paisa) {
+        return formatPKR(paisa || 0).replace(/^-?Rs\.\s*/, '').replace(/\.\d{2}$/, '');
       },
-      num(amount) {
-        return Math.round(Math.abs(amount || 0)).toLocaleString('en-IN');
+      kg(grams) {
+        const n = formatKg(grams || 0);
+        return lang === 'ur' ? `${n} کلو` : `${n} kg`;
+      },
+      ratePerKg(paisaPerKg) {
+        return lang === 'ur' ? `${rs(paisaPerKg)} فی کلو` : `${rs(paisaPerKg)}/kg`;
       },
       date(iso) {
         if (!iso) return '';
@@ -53,9 +69,8 @@ export function LanguageProvider({ children }) {
         const hh = h % 12 === 0 ? 12 : h % 12;
         return `${hh}:${String(m).padStart(2, '0')} ${mer}`;
       },
-    }),
-    [lang]
-  );
+    };
+  }, [lang]);
 
   // Party names and areas carry an Urdu spelling in the mock data.
   const partyName = useCallback((p) => (p ? (lang === 'ur' ? p.nameUr : p.name) : ''), [lang]);

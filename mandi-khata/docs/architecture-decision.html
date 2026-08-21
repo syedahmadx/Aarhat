@@ -1,0 +1,702 @@
+<title>Mandi Khata Backend Decision</title>
+<style>
+  :root {
+    --ground: #F5F8F8;
+    --surface: #FFFFFF;
+    --surface-2: #EDF3F3;
+    --ink: #0F2E35;
+    --ink-2: #3D565C;
+    --ink-3: #6B8085;
+    --rule: #D3E0E1;
+    --rule-2: #E4EDED;
+    --accent: #2A6E77;
+    --accent-soft: #DCEBEC;
+    --good: #15803D;
+    --good-soft: #DCF3E4;
+    --warn: #A85B08;
+    --warn-soft: #FBEBD5;
+    --bad: #B4231F;
+    --bad-soft: #FADEDC;
+    --mono: ui-monospace, "Cascadia Mono", "Consolas", "DejaVu Sans Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+    --urdu: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Urdu Typesetting", serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0B1719;
+      --surface: #12252A;
+      --surface-2: #172E34;
+      --ink: #E2EDED;
+      --ink-2: #A9C0C3;
+      --ink-3: #7B9498;
+      --rule: #24424A;
+      --rule-2: #1B343A;
+      --accent: #61B2BA;
+      --accent-soft: #16333A;
+      --good: #57C77E;
+      --good-soft: #122E1E;
+      --warn: #D9942F;
+      --warn-soft: #33240E;
+      --bad: #E86A63;
+      --bad-soft: #351715;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0B1719;
+    --surface: #12252A;
+    --surface-2: #172E34;
+    --ink: #E2EDED;
+    --ink-2: #A9C0C3;
+    --ink-3: #7B9498;
+    --rule: #24424A;
+    --rule-2: #1B343A;
+    --accent: #61B2BA;
+    --accent-soft: #16333A;
+    --good: #57C77E;
+    --good-soft: #122E1E;
+    --warn: #D9942F;
+    --warn-soft: #33240E;
+    --bad: #E86A63;
+    --bad-soft: #351715;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px 120px; }
+
+  /* ---------- masthead ---------- */
+  .mast { padding: 72px 0 40px; border-bottom: 2px solid var(--ink); }
+  .eyebrow {
+    font-family: var(--sans); font-size: 11px; font-weight: 700;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--accent);
+    margin: 0 0 18px;
+  }
+  h1 {
+    font-family: var(--sans); font-weight: 800; letter-spacing: -.03em;
+    font-size: clamp(34px, 6vw, 54px); line-height: 1.04; margin: 0 0 20px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 20px; line-height: 1.5; color: var(--ink-2); margin: 0;
+    max-width: 62ch;
+  }
+  .meta {
+    font-family: var(--sans); font-size: 12.5px; color: var(--ink-3);
+    margin-top: 28px; display: flex; flex-wrap: wrap; gap: 8px 20px;
+  }
+  .meta b { color: var(--ink-2); font-weight: 600; }
+
+  /* ---------- verdict slab ---------- */
+  .verdict {
+    background: var(--ink); color: var(--ground);
+    border-radius: 3px; padding: 34px 34px 30px; margin: 44px 0 0;
+  }
+  :root[data-theme="dark"] .verdict,
+  .verdict { }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .verdict { background: var(--surface-2); color: var(--ink); border: 1px solid var(--rule); }
+  }
+  :root[data-theme="dark"] .verdict { background: var(--surface-2); color: var(--ink); border: 1px solid var(--rule); }
+  .verdict .eyebrow { color: var(--accent); opacity: .95; }
+  .verdict p { margin: 0 0 14px; font-size: 19px; line-height: 1.55; }
+  .verdict p:last-child { margin-bottom: 0; }
+  .verdict strong { font-family: var(--sans); font-weight: 700; }
+
+  /* ---------- sections ---------- */
+  section { padding-top: 56px; }
+  h2 {
+    font-family: var(--sans); font-weight: 800; letter-spacing: -.02em;
+    font-size: 27px; line-height: 1.18; margin: 0 0 6px; text-wrap: balance;
+    display: flex; gap: 14px; align-items: baseline;
+  }
+  h2 .num {
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    font-variant-numeric: tabular-nums; flex-shrink: 0;
+    letter-spacing: .04em; padding-top: 4px;
+  }
+  h3 {
+    font-family: var(--sans); font-weight: 700; font-size: 17.5px;
+    letter-spacing: -.01em; margin: 34px 0 8px; color: var(--ink);
+  }
+  .dek {
+    font-family: var(--sans); font-size: 14.5px; color: var(--ink-3);
+    margin: 0 0 24px; padding-left: 40px;
+  }
+  p { margin: 0 0 17px; max-width: 68ch; }
+  a { color: var(--accent); }
+  ul, ol { max-width: 68ch; padding-left: 22px; margin: 0 0 17px; }
+  li { margin-bottom: 9px; }
+  strong { font-weight: 700; }
+  code {
+    font-family: var(--mono); font-size: .84em;
+    background: var(--surface-2); padding: 1px 5px; border-radius: 3px;
+    color: var(--ink); border: 1px solid var(--rule-2);
+  }
+  .urdu { font-family: var(--urdu); direction: rtl; unicode-bidi: isolate; font-size: 1.05em; }
+
+  /* ---------- tables ---------- */
+  .scroll { overflow-x: auto; margin: 0 0 22px; border: 1px solid var(--rule); border-radius: 3px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-family: var(--sans); font-size: 14px; }
+  th {
+    text-align: left; font-weight: 700; font-size: 11px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--ink-3);
+    padding: 12px 16px; border-bottom: 1px solid var(--rule); white-space: nowrap;
+    background: var(--surface-2);
+  }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--rule-2); vertical-align: top; color: var(--ink-2); }
+  tr:last-child td { border-bottom: 0; }
+  td b, td strong { color: var(--ink); font-weight: 650; }
+  .num-col { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ---------- code blocks ---------- */
+  pre {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.66;
+    background: var(--surface); color: var(--ink-2);
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    border-radius: 3px; padding: 18px 20px; overflow-x: auto; margin: 0 0 22px;
+  }
+  pre b { color: var(--accent); font-weight: 600; }
+  pre i { color: var(--ink-3); font-style: normal; }
+
+  /* ---------- risk items ---------- */
+  .risk {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-left: 4px solid var(--ink-3); border-radius: 3px;
+    padding: 16px 20px; margin: 0 0 12px;
+  }
+  .risk.crit { border-left-color: var(--bad); }
+  .risk.warn { border-left-color: var(--warn); }
+  .risk.ok { border-left-color: var(--good); }
+  .risk h4 {
+    font-family: var(--sans); font-size: 15px; font-weight: 700;
+    margin: 0 0 6px; color: var(--ink); letter-spacing: -.01em;
+  }
+  .risk p { font-size: 15px; margin: 0 0 8px; color: var(--ink-2); }
+  .risk p:last-child { margin-bottom: 0; }
+  .tag {
+    display: inline-block; font-family: var(--sans); font-size: 10px;
+    font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 2px; margin-right: 9px; vertical-align: 2px;
+  }
+  .tag.crit { background: var(--bad-soft); color: var(--bad); }
+  .tag.warn { background: var(--warn-soft); color: var(--warn); }
+  .tag.ok { background: var(--good-soft); color: var(--good); }
+  .tag.info { background: var(--accent-soft); color: var(--accent); }
+
+  /* ---------- callout ---------- */
+  .note {
+    background: var(--surface-2); border-radius: 3px;
+    padding: 20px 24px; margin: 0 0 22px;
+    border: 1px solid var(--rule);
+  }
+  .note p { margin-bottom: 12px; font-size: 16px; }
+  .note p:last-child { margin-bottom: 0; }
+  .note .tag { margin-bottom: 8px; }
+
+  /* ---------- architecture diagram ---------- */
+  .arch { margin: 0 0 26px; }
+  .arch-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .box {
+    flex: 1 1 240px; background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 3px; padding: 18px 20px;
+  }
+  .box.primary { border-color: var(--accent); border-width: 2px; }
+  .box h5 {
+    font-family: var(--sans); font-size: 12px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--accent);
+    margin: 0 0 4px;
+  }
+  .box .role { font-family: var(--sans); font-size: 13px; color: var(--ink-3); margin: 0 0 12px; }
+  .box ul { margin: 0; padding-left: 18px; font-family: var(--sans); font-size: 13.5px; }
+  .box li { margin-bottom: 5px; color: var(--ink-2); }
+  .flow {
+    font-family: var(--sans); font-size: 13px; color: var(--ink-3);
+    text-align: center; padding: 12px 0; letter-spacing: .02em;
+  }
+  .flow b { color: var(--accent); font-weight: 700; }
+
+  /* ---------- phases ---------- */
+  .phase {
+    display: grid; grid-template-columns: 52px 1fr; gap: 18px;
+    padding: 20px 0; border-bottom: 1px solid var(--rule-2);
+  }
+  .phase:last-child { border-bottom: 0; }
+  .phase .pnum {
+    font-family: var(--sans); font-size: 26px; font-weight: 800;
+    color: var(--rule); line-height: 1; font-variant-numeric: tabular-nums;
+    letter-spacing: -.04em;
+  }
+  .phase h4 {
+    font-family: var(--sans); font-size: 16.5px; font-weight: 700;
+    margin: 0 0 4px; color: var(--ink); letter-spacing: -.01em;
+  }
+  .phase .days {
+    font-family: var(--sans); font-size: 12px; font-weight: 600;
+    color: var(--accent); letter-spacing: .04em; text-transform: uppercase;
+    margin: 0 0 8px;
+  }
+  .phase p { font-size: 15.5px; margin: 0 0 8px; color: var(--ink-2); }
+  .phase .sell {
+    font-family: var(--sans); font-size: 13.5px; color: var(--ink-3);
+    border-left: 2px solid var(--rule); padding-left: 12px; margin: 10px 0 0;
+  }
+
+  hr { border: 0; border-top: 1px solid var(--rule); margin: 56px 0 0; }
+  footer {
+    padding-top: 32px; font-family: var(--sans); font-size: 13px;
+    color: var(--ink-3); max-width: 68ch;
+  }
+  @media (max-width: 620px) {
+    body { font-size: 16px; }
+    .wrap { padding: 0 18px 80px; }
+    .mast { padding-top: 48px; }
+    .dek { padding-left: 0; }
+    h2 { flex-direction: column; gap: 2px; }
+    .verdict { padding: 24px; }
+  }
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">Architecture Decision · Mandi Khata</p>
+  <h1>Where the data lives</h1>
+  <p class="standfirst">Choosing the database, sync model, auth and licensing for a Windows ledger app sold shop-by-shop into Pakistani fish mandis — and the kill switch that gets you paid.</p>
+  <div class="meta">
+    <span><b>Method</b> 12-agent evaluation · 4 opposed proposals · 3 judge panels · adversarial critique</span>
+    <span><b>Scope</b> Windows desktop + mobile web later</span>
+  </div>
+</header>
+
+<div class="verdict">
+  <p class="eyebrow">The answer</p>
+  <p><strong>Use both, and give each one job.</strong> <strong>SQLite</strong> is the real database, living as a single file on the shop's own PC. <strong>Supabase</strong> is not your database — it is your backup target, your licence server, and the backend for your own admin dashboard.</p>
+  <p>Do not make Supabase the source of truth. Do not run your own SQL Server or Postgres VPS. And do not build a sync engine — your answers mean you don't need one.</p>
+</div>
+
+<section>
+  <h2><span class="num">01</span> What your three answers changed</h2>
+  <p class="dek">You cut the hardest part of this problem out of v1 without realising it.</p>
+
+  <p>The evaluation ran against the hard version of your brief: phone and laptop both editing, both offline, needing to reconcile. That is a genuinely difficult distributed-systems problem, and it is where this class of project usually dies. Your answers collapse it.</p>
+
+  <div class="risk ok">
+    <h4><span class="tag ok">Deleted</span>Bidirectional sync, and everything under it</h4>
+    <p>Deferring the phone means <strong>one device writes</strong>. One writer cannot conflict with itself. That removes hybrid logical clocks, conflict resolution, op-log replay engines, and the four separate silent-data-loss bugs the critique found in that machinery. It also removes PowerSync, ElectricSQL and Turso embedded replicas from the decision entirely — you were never going to need them.</p>
+  </div>
+
+  <div class="risk ok">
+    <h4><span class="tag ok">Simplified</span>Cloud is a mirror, not a participant</h4>
+    <p>Because shopkeepers aren't holding you to a literal "it's on my machine" promise, the cloud copy can be plain readable rows rather than client-side-encrypted blobs. That matters enormously for support: when a shop phones you at 7am saying a balance is wrong, you can actually look.</p>
+  </div>
+
+  <div class="risk crit">
+    <h4><span class="tag crit">Kept</span>Offline writes are still non-negotiable</h4>
+    <p>This is the one thing your answers do <em>not</em> remove. Pakistan had multi-day national mobile suspensions as recently as the 2024 election, and PTCL regional faults run for weeks. If the app can't record a sale with the line down, you get a furious call during the only four hours of the day that matter, and the shop reaches for the paper khata and never puts it down.</p>
+    <p>This is the whole reason SQLite stays the source of truth even though you're allowed to use the cloud. It's about the internet, not about customer preference.</p>
+  </div>
+
+  <div class="note">
+    <span class="tag info">Why this isn't a fudge</span>
+    <p>The two winning proposals scored 6.33 and 6.00 across three judges — a statistical tie, which means neither was right as written. Local-first won on the failure this market punishes hardest: a paid-up shop locked out at 6am. Cloud-first won on the failure that actually kills solo vendors: being unable to see a customer's data during a support call. The split above takes both, because the division of labour is clean and one-directional — <strong>the cloud never has authority over anything a shopkeeper can see.</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">02</span> Why not the two things you named</h2>
+  <p class="dek">You asked "Supabase or SQL?" — both deserve a direct answer.</p>
+
+  <h3>Why not Supabase alone</h3>
+  <p>Every cloud-as-truth design ends up with an offline cliff: some number of days after which a client that hasn't checked in must go read-only, because a cache diverging for months is indistinguishable from a stolen laptop. That means a timer that can lock a customer <em>who paid and did nothing wrong</em>. There is no number you can pick for that timer that is safe in a market with multi-week outages.</p>
+  <p>It also makes you a single point of failure for every customer at once. A declined foreign card — routine for Pakistani issuers on recurring USD subscriptions — pauses your project, and every shop stops trading simultaneously. In the recommended split, that same event is invisible to every shop.</p>
+
+  <h3>Why not your own SQL server</h3>
+  <p>If you mean a cloud Postgres/MySQL/MSSQL box: you inherit everything above <em>plus</em> a permanent unpaid sysadmin job — OS patching, TLS renewal, major-version upgrades, monitoring, and the one that actually bites, proving your backups restore. You are a product developer. Every hour on that box is an hour not spent on the roznamcha screen.</p>
+  <p>If you mean a LAN SQL server in each shop — the FoxPro/Access model your competitors use — that's a second machine to install and a second thing to fail, with no phone story at all.</p>
+</section>
+
+<section>
+  <h2><span class="num">03</span> The architecture</h2>
+  <p class="dek">Three boxes. In v1, data flows one way only.</p>
+
+  <div class="arch">
+    <div class="arch-row">
+      <div class="box primary">
+        <h5>Shop PC</h5>
+        <p class="role">Source of truth · Windows 10+</p>
+        <ul>
+          <li>Tauri shell around your existing React app</li>
+          <li><code>shop.sqlite3</code> — the real database</li>
+          <li>WAL mode, <code>synchronous=FULL</code></li>
+          <li>Nightly backup to USB + cloud</li>
+          <li>Works fully with the cable unplugged</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h5>Supabase</h5>
+        <p class="role">Mirror · licence · dashboard backend</p>
+        <ul>
+          <li>Encrypted backup blobs per shop</li>
+          <li><code>shops</code>, <code>licenses</code>, <code>devices</code>, <code>payments</code></li>
+          <li>Readable mirror for support calls</li>
+          <li>One project, all shops, RLS-isolated</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h5>Vendor dashboard</h5>
+        <p class="role">Yours only · web</p>
+        <ul>
+          <li>Onboard a shop, issue activation key</li>
+          <li>Record a JazzCash/bank payment</li>
+          <li>Reissue licence after hardware change</li>
+          <li>Read a customer's ledger, audited</li>
+        </ul>
+      </div>
+    </div>
+    <p class="flow"><b>v1 →</b> shop pushes backups up. Nothing ever comes down except a licence file. &nbsp;·&nbsp; <b>v2 →</b> phone reads the mirror. Still nothing comes down to the PC.</p>
+  </div>
+
+  <div class="note">
+    <span class="tag info">The upgrade path you're preserving</span>
+    <p>When you add the phone later, make it <strong>read-only against the cloud mirror</strong>. That gives shopkeepers the "check a balance from the mandi floor" value with <em>still</em> no conflict resolution anywhere in the system. Only if customers genuinely demand phone data entry do you need real sync — and by then you'll have revenue to pay for it. Many products never need that step.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span> The schema</h2>
+  <p class="dek">Two rules here will save you more pain than everything else combined.</p>
+
+  <h3>Money is integer paisa. Never a float.</h3>
+  <p>Every amount is <code>INTEGER</code> paisa; every weight is <code>INTEGER</code> grams. Floating-point rounding in a commission calculation produces balances that are wrong by a rupee, which shopkeepers <em>will</em> notice and will never forgive. Write one rounding function, round-half-up, and use it for both gross and commission — the critique found a half-paisa remainder in your current 0.5 kg weight steps that silently breaks the <code>gross = commission + expenses + net</code> identity.</p>
+
+  <h3>IDs are UUIDs from day one</h3>
+  <p>Even without sync, autoincrement IDs make backup-restore and any future multi-device story miserable. UUIDv7 sorts chronologically and costs you nothing now.</p>
+
+  <pre><b>-- Core domain (mirrors your existing AppContext shape)</b>
+CREATE TABLE parties (
+  id           BLOB PRIMARY KEY,        <i>-- UUIDv7</i>
+  name         TEXT NOT NULL,
+  name_ur      TEXT,
+  type         TEXT NOT NULL CHECK(type IN ('beopari','khareedar')),
+  phone        TEXT, area TEXT, area_ur TEXT,
+  opening_paisa INTEGER NOT NULL DEFAULT 0,
+  merged_into  BLOB REFERENCES parties(id),   <i>-- see party.merge below</i>
+  created_at   INTEGER NOT NULL,
+  updated_at   INTEGER NOT NULL,
+  deleted_at   INTEGER
+);
+
+CREATE TABLE sales (
+  id            BLOB PRIMARY KEY,
+  biz_date      TEXT NOT NULL,          <i>-- 'YYYY-MM-DD', the trading day</i>
+  ts_ms         INTEGER NOT NULL,
+  gaari         TEXT,
+  beopari_id    BLOB NOT NULL REFERENCES parties(id),
+  khareedar_id  BLOB NOT NULL REFERENCES parties(id),
+  fish_type     TEXT NOT NULL,
+  weight_g      INTEGER NOT NULL CHECK(weight_g &gt; 0),
+  rate_paisa    INTEGER NOT NULL CHECK(rate_paisa &gt; 0),
+  commission_bp INTEGER NOT NULL,       <i>-- basis points; 6.25% = 625</i>
+  gross_paisa      INTEGER NOT NULL,
+  commission_paisa INTEGER NOT NULL,
+  net_payout_paisa INTEGER NOT NULL,
+  voided_by     BLOB REFERENCES sales(id),
+  created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, deleted_at INTEGER
+);
+
+CREATE TABLE sale_expenses (
+  id         BLOB PRIMARY KEY,
+  sale_id    BLOB NOT NULL REFERENCES sales(id),
+  type       TEXT NOT NULL,             <i>-- Baraf, Mazdoori, Kraya, Advance Cut, Other</i>
+  amount_paisa INTEGER NOT NULL CHECK(amount_paisa &gt;= 0),
+  borne_by   TEXT NOT NULL DEFAULT 'beopari'
+             CHECK(borne_by IN ('beopari','khareedar','shop'))
+);
+
+CREATE TABLE cash_entries (
+  id         BLOB PRIMARY KEY,
+  biz_date   TEXT NOT NULL, ts_ms INTEGER NOT NULL,
+  party_id   BLOB NOT NULL REFERENCES parties(id),
+  direction  TEXT NOT NULL CHECK(direction IN ('wasooli','payment')),
+  amount_paisa INTEGER NOT NULL CHECK(amount_paisa &gt; 0),
+  note TEXT, note_ur TEXT,
+  created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, deleted_at INTEGER
+);
+
+<b>-- Explicit allocation: which payment cleared which sale.</b>
+<b>-- Without this, "why is this sale still Partial?" is unanswerable.</b>
+CREATE TABLE allocations (
+  id            BLOB PRIMARY KEY,
+  cash_entry_id BLOB NOT NULL REFERENCES cash_entries(id),
+  sale_id       BLOB NOT NULL REFERENCES sales(id),
+  side          TEXT NOT NULL CHECK(side IN ('receivable','payable')),
+  amount_paisa  INTEGER NOT NULL CHECK(amount_paisa &gt; 0)
+);
+
+<b>-- Indexes the critique found missing. Without these, the khata screen</b>
+<b>-- degrades to multi-second on a 4GB Celeron with five years of data.</b>
+CREATE INDEX sales_khareedar ON sales(khareedar_id, biz_date, ts_ms);
+CREATE INDEX sales_beopari   ON sales(beopari_id, biz_date, ts_ms);
+CREATE INDEX sales_day       ON sales(biz_date, ts_ms);
+CREATE INDEX cash_party      ON cash_entries(party_id, biz_date, ts_ms);
+CREATE INDEX cash_day        ON cash_entries(biz_date, ts_ms);
+CREATE INDEX sale_exp_sale   ON sale_expenses(sale_id);
+CREATE INDEX alloc_cash      ON allocations(cash_entry_id);
+CREATE INDEX alloc_sale      ON allocations(sale_id);</pre>
+
+  <h3>Three things the review says to add before shop #1</h3>
+
+  <div class="risk crit">
+    <h4><span class="tag crit">Add now</span>Party merge</h4>
+    <p>Two munshis will create "Akram Fish Corner" and "Akram Fish" within the first week. A balance split across two party records is exactly the wrong-balance catastrophe that ends trust. The <code>merged_into</code> column above is cheap now and painful to retrofit.</p>
+  </div>
+
+  <div class="risk crit">
+    <h4><span class="tag crit">Add now</span>Voids as contra entries, never deletions</h4>
+    <p>If voiding a sale removes its row, every khata statement you already printed and handed to a khareedar becomes wrong from that date forward. A void must post a <em>reversing entry on today's date</em> and leave the original struck through in place. This is what a paper khata does and what every accounting system does.</p>
+  </div>
+
+  <div class="risk warn">
+    <h4><span class="tag warn">Decide now</span>Cash in hand, and who pays commission</h4>
+    <p>Every arhti counts his drawer at day end; there is no opening/closing cash balance anywhere in the current model, and its absence reads as "this software doesn't know what a day is." Separately, your mock data hardcodes 6.25% deducted from the beopari — confirm that's universal before freezing it, because per-maund commission and khareedar-borne freight both exist in this trade.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">05</span> Sign-in when there's no internet</h2>
+  <p class="dek">An account is local to the shop. The cloud never authenticates a shopkeeper.</p>
+
+  <p>Users live in the shop's own SQLite file, with passwords hashed using <strong>Argon2id</strong>. Your existing Malik/Munshi roles map straight onto this — the role gating you already built stays exactly as it is, it just reads from a real table instead of a dropdown.</p>
+
+  <p><strong>There is no sign-up.</strong> You create the Malik account during your install visit. The Malik creates munshi accounts from a settings screen. This matches how the software is actually sold and removes an entire attack surface.</p>
+
+  <h3>Password recovery with no email</h3>
+  <p>The hard case, and it has a good answer. At install you print an <strong>Install Card</strong> — a physical card the shop keeps — carrying a one-time recovery code. A Malik who forgets their password enters that code offline. Munshi passwords are reset by the Malik, no code needed. If the card is lost, recovery goes through you: you verify identity by phone (you installed it, you know this shop) and issue a signed reset token through the same channel as a licence file.</p>
+</section>
+
+<section>
+  <h2><span class="num">06</span> Licensing and the kill switch</h2>
+  <p class="dek">Two artefacts, because a signature can't be typed and a typeable key can't be verified offline.</p>
+
+  <h3>The activation key</h3>
+  <p><code>MK-4739-2851-6604-1927</code> — 16 digits plus a Luhn check digit, grouped in fours. Digits rather than letters because your users read these off a WhatsApp message in Urdu at 6am, and a check digit rejects a typo on screen instead of turning into a phone call. It's a <em>lookup token only</em>; it proves nothing offline.</p>
+
+  <h3>The licence file</h3>
+  <p><code>license.mk</code>, about 500 bytes: a CBOR payload with an Ed25519 signature. This is what the app actually verifies at launch, with zero network.</p>
+
+  <pre>{ v:1, lid, shop_id, shop_name, shop_name_ur,
+  fp:[{name,hash,weight}…], min_score,
+  issued_at, not_before,
+  <b>paid_through</b>, grace_days:21, checkin_days:30,
+  tier, seats, kid, iss }</pre>
+
+  <p>Three details that are where these systems actually break: verify the signature over the <strong>raw received bytes</strong> and never a re-serialised struct; domain-separate by signing <code>b"mandikhata/lic/v1" || payload</code>; and use strict Ed25519 verification, not the permissive path.</p>
+
+  <h3>Machine binding — fuzzy, not one hash</h3>
+  <p>Hashing everything into a single value locks out paying customers on any hardware change. Score components separately and require a threshold:</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Component</th><th class="num-col">Weight</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>SMBIOS System UUID</td><td class="num-col">4</td><td>Firmware table — <b>not WMI</b>, whose repository is routinely corrupt on neglected installs</td></tr>
+      <tr><td>Baseboard serial</td><td class="num-col">3</td><td>Same firmware table</td></tr>
+      <tr><td>Windows MachineGuid</td><td class="num-col">3</td><td>Registry</td></tr>
+      <tr><td>Windows InstallDate</td><td class="num-col">2</td><td>Registry — note this <b>resets on a feature upgrade</b></td></tr>
+      <tr><td>System disk serial</td><td class="num-col">2</td><td>Storage query</td></tr>
+      <tr><td>CPU family/model/cores</td><td class="num-col">1</td><td>CPUID</td></tr>
+      <tr><td>C: volume serial</td><td class="num-col">1</td><td>Win32</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Pass requires <strong>score ≥ 10 of 16 and at least one weight-3-or-higher match</strong>. RAM is deliberately excluded, so a memory upgrade scores 16/16. A folder copied to another PC scores about 3/16 and is correctly blocked. Blacklist the junk values Pakistani whitebox PCs return — <code>Default string</code>, <code>To Be Filled By O.E.M.</code>, all-zeroes, all-FFs — and discard those components rather than matching on them.</p>
+
+  <p><strong>Drift healing:</strong> on every successful check-in, if the score passes but isn't perfect, silently re-upload the current components and reissue. This is what makes fingerprinting invisible instead of infuriating.</p>
+
+  <h3>The ladder when a shop stops paying</h3>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Stage</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr><td class="num-col"><b>Paid</b></td><td>Silent. <b>Valid regardless of connectivity.</b></td></tr>
+      <tr><td class="num-col"><b>+1 to +7 days</b></td><td>Yellow bar, <span class="urdu">ادائیگی باقی ہے</span>, your phone number. Full function.</td></tr>
+      <tr><td class="num-col"><b>+8 to +21</b></td><td>Red bar plus a dismissable launch modal. Full function.</td></tr>
+      <tr><td class="num-col"><b>+22 on</b></td><td><b>Read-only lock.</b> No new sales, cash entries or parties.</td></tr>
+      <tr><td class="num-col"><b>Paused</b></td><td>A zero-cost state you grant for seasonal closure or Eid. No lock timer.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="tag crit">The single most important rule in the design</span>
+    <p><strong>A missed check-in produces a banner and can never cause a lock.</strong> Only <code>paid_through</code> governs the lock. Distinguishing "has not paid" from "has not been online" is the entire game — and it's why there is no offline cliff anywhere in this design. A paid-up shop with the cable unplugged for six weeks notices nothing at all.</p>
+  </div>
+
+  <h3>Clock tampering</h3>
+  <p>Keep a monotonic high-water mark of the greatest timestamp ever observed, derived from <strong>the maximum of</strong> a stored file value, the newest row in the database, and the last server contact. If the wall clock reads earlier than that mark by more than a day, evaluate the licence against the mark instead. Deleting the file is not a reset, because the database floor survives it. Rolling the clock forward only expires them sooner.</p>
+
+  <h3>Offline renewal</h3>
+  <p>Primary path: you generate the new <code>license.mk</code> in your dashboard and <strong>send the 500-byte file over WhatsApp</strong>. Nearly every shop has WhatsApp on a phone even when the PC has no line. The munshi saves it and clicks <span class="urdu">لائسنس فائل کھولیں</span>. Real signature, verified offline, no shared secret to steal.</p>
+
+  <div class="risk crit">
+    <h4><span class="tag crit">Don't build this</span>The "offline extension code" scheme</h4>
+    <p>An HMAC-derived typeable extension code needs a long-lived secret sitting in plaintext on a deliberately unencrypted disk, and that secret generates valid codes for every future period. One technician extracts it once and sells "lifetime activation, PKR 2,000" to your entire market. Worse, the fingerprint doesn't help — it prevents <em>copying</em>, so this converts paying customers into permanent non-payers one at a time.</p>
+  </div>
+
+  <h3>How much anti-tamper? Almost none.</h3>
+  <p>Keep one clear licence-state function checked in three obvious places. Skip VMProtect and Themida entirely — they trip the ancient antivirus on mandi PCs, and that support catastrophe costs far more than the handful of people who would reverse this.</p>
+  <p>But be clear-eyed about the consequence, which the analysis initially glossed: <strong>one crack serves your whole market permanently</strong>, and every customer's binary contains the identical embedded public key. The defence isn't in the binary. Put the value in what a crack can't provide — cloud backup and restore, the phone view later, and your support. Consider delivering frontend updates only to devices whose licence check-in succeeded, so a cracked build freezes at whatever version it was cracked on and rots.</p>
+
+  <div class="note">
+    <span class="tag ok">Ruling — and it isn't close</span>
+    <p><strong>A locked shop must always be able to read, print and export its own ledger.</strong> It loses exactly one thing: creating new entries.</p>
+    <p>Commercially, blocking reads adds zero leverage — the shop can't run tomorrow's business either way, and the ledger's value to them is prospective. Reputationally, every arhti in a mandi drinks tea with every other arhti; do this once and by morning the story is "that company locked Haji sahib out of his own hisaab," and mandis talk to each other. And ethically it's the same answer: a man's udhaar book is his own record of who owes him money. You hold a copy; you don't own the record.</p>
+    <p>Make it a printed promise on the Install Card. It's a sales asset, and no competitor will offer it.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">07</span> Build order</h2>
+  <p class="dek">Each phase ends with something you could sell or install. Estimates are developer-days for someone who knows React and is learning Tauri.</p>
+
+  <div class="phase">
+    <div class="pnum">0</div>
+    <div>
+      <h4>Money and schema foundation</h4>
+      <p class="days">4 days</p>
+      <p>Convert every amount in the existing code to integer paisa and weights to grams. Write the rounding function and a property test asserting <code>gross = commission + expenses + net</code>. Port the mock data to the real schema as a golden-file fixture.</p>
+      <p class="sell">Nothing ships. This is the only phase where that's acceptable — getting money types wrong later means migrating live shop data.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">1</div>
+    <div>
+      <h4>Tauri shell on real SQLite</h4>
+      <p class="days">10 days</p>
+      <p>Wrap the existing React app in Tauri, swap <code>AppContext</code>'s in-memory state for real queries. Your UI code barely changes — this is the point of having built it the way you did. Ship the licence <em>verification</em> here too (two days, no dashboard yet) so the pilot runs on a 120-day licence rather than an unlocked build.</p>
+      <p class="sell">A working <code>.exe</code> you can install at one pilot shop.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">2</div>
+    <div>
+      <h4>Backup and a real restore drill</h4>
+      <p class="days">5 days</p>
+      <p>Nightly local snapshot, automatic copy to a permanently-plugged USB stick, and an encrypted upload to cloud storage. Then <em>actually restore it onto a different machine</em> and verify the balances match.</p>
+      <p class="sell">This is what makes the pilot safe. Do not let a real shop enter a second week of real udhaar without offsite backup — one fire, theft or ransomware on an unpatched Win10 box destroys the PC and the USB together.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">3</div>
+    <div>
+      <h4>Users, roles, offline login</h4>
+      <p class="days">5 days</p>
+      <p>Argon2id passwords, the Malik/Munshi tables behind your existing role gating, Install Card recovery codes.</p>
+      <p class="sell">Multi-clerk shops become sellable.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">4</div>
+    <div>
+      <h4>Urdu printing</h4>
+      <p class="days">6 days</p>
+      <p>Party statements and the daily roznamcha on thermal and dot-matrix printers. Nastaliq rendering through WebView2 to a cheap thermal printer is its own adventure — budget real time and test on actual mandi hardware early.</p>
+      <p class="sell">Often the feature that closes the sale. A shopkeeper who can hand a khareedar a printed Urdu statement looks serious.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">5</div>
+    <div>
+      <h4>Fingerprint, ladder, kill switch</h4>
+      <p class="days">8 days</p>
+      <p>Component scoring, drift healing, the clock high-water mark, the grace ladder and read-only lock.</p>
+      <p class="sell">You can now stop giving it away.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">6</div>
+    <div>
+      <h4>Vendor dashboard</h4>
+      <p class="days">8 days</p>
+      <p>Onboard a shop, issue and reissue licence files, record a payment, one-tap "new hardware, same shop" (rate-limited, not manual — at 200 shops, dead motherboards become a real recurring workload), and an audited view of a customer's ledger.</p>
+      <p class="sell">You can onboard shop #10 without touching a database console.</p>
+    </div>
+  </div>
+
+  <p style="margin-top:24px"><strong>Roughly 46 developer-days.</strong> With the usual 1.4× reality multiplier and part-time work, plan on <strong>three to four months to first paid install</strong> — assuming you take the advice in the next section about Rust.</p>
+</section>
+
+<section>
+  <h2><span class="num">08</span> What I would not do</h2>
+  <p class="dek">The tempting choices, and why to avoid each.</p>
+
+  <div class="risk crit">
+    <h4><span class="tag crit">Biggest schedule risk</span>Don't put Rust on the critical path</h4>
+    <p>Tauri is Rust-based, and the natural instinct is to write your data layer there. The review's estimate for a React developer's first serious Rust project — unsafe FFI for hardware fingerprinting, lifetimes across a data engine, licence crypto, Tauri's IPC and permission model — added <strong>three to four weeks of pure language tax</strong> that appears in nobody's plan.</p>
+    <p>Instead: keep your logic in TypeScript in the WebView, use the SQL plugin for database access, and confine Rust to roughly 200 lines of fingerprint readers in a single file you write once and never touch. If performance ever demands more, move it then, with revenue in hand.</p>
+  </div>
+
+  <div class="risk crit">
+    <h4><span class="tag crit">Data loss</span>Don't move the database file between devices</h4>
+    <p>Your original instinct. The moment someone copies Monday's file over Tuesday's, a day of udhaar is gone with no warning and no recovery. If you must move data manually, build explicit export/import that merges rather than overwrites — but with the phone deferred, you shouldn't need it at all.</p>
+  </div>
+
+  <div class="risk warn">
+    <h4><span class="tag warn">Cost trap</span>Don't run on Supabase's free tier in production</h4>
+    <p>Free caps the database at 500 MB and flips it to <strong>read-only</strong> when you hit it — your uploads start failing while the app reports nothing wrong. Pro is $25/month, which is one shop's subscription. Pay it from shop #1 and set a retention policy for old backup blobs now rather than discovering the ceiling at shop #40.</p>
+  </div>
+
+  <div class="risk warn">
+    <h4><span class="tag warn">Verify first</span>Don't assume Windows 7 is reachable</h4>
+    <p>Rust dropped Windows 7 from tier-1 support, Tauri 2's floor is Windows 10 1803, and the Firefox ESR fallback that was supposed to cover old machines reaches end of life this month. There is no cheap Win7 path. Run <code>winver</code> at three real mandi shops before you write any code — if a meaningful share are on 7, your options are "a Windows 10 upgrade is a line item on the paid install" or "don't sell to those shops." Not a workaround.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">09</span> Open questions</h2>
+  <p class="dek">Decisions only you can make. The first two block schema choices.</p>
+
+  <div class="risk">
+    <h4>Is commission always a percentage of gross, always paid by the beopari?</h4>
+    <p>Your mock data assumes 6.25% deducted from the beopari's payout. Per-maund commission and khareedar-borne freight both exist in this trade. Confirm at real shops before freezing the schema — this is expensive to change once shops have data.</p>
+  </div>
+
+  <div class="risk">
+    <h4>Does settlement happen per sale, or per gaari-load?</h4>
+    <p>If arhtis settle by truckload rather than by individual sale, the allocation model above is the wrong shape and needs a lot/consignment entity above <code>sales</code>.</p>
+  </div>
+
+  <div class="risk">
+    <h4>What are these shops switching from, and can you read it?</h4>
+    <p>Every shop you win is leaving something — paper, Excel, or a competitor's FoxPro app. Nothing in this plan imports any of it, and "type in three years of udhaar by hand" loses sales.</p>
+  </div>
+
+  <div class="risk">
+    <h4>What happens to your customers if you stop?</h4>
+    <p>Worth answering before a shopkeeper asks, because they will. The strong version: issue every paying customer a sealed <strong>perpetual fallback licence</strong> at install, dated decades out, which they activate only if you disappear. It costs nothing and converts your biggest objection into a closing argument. A "trusted family member holds a USB" arrangement is a hope, not an answer.</p>
+  </div>
+</section>
+
+<hr>
+<footer>
+  <p>Produced from a 12-agent evaluation: three research sweeps (sync engines, licensing cryptography, desktop shell and cloud platforms), four architecture proposals written from deliberately opposed priors, a three-lens judge panel scoring all four, then synthesis and an adversarial critique that verified claims against the live repository and executed the proposed schema. Scoped afterward to Windows desktop plus deferred mobile web, single-writer, no phone data entry.</p>
+  <p>Product, pricing and legal details were current at the time of review and should be re-verified before you commit to them — particularly Supabase tier limits, Tauri's Windows floor, and Punjab Revenue Authority rates for IT services.</p>
+</footer>
+
+</div>

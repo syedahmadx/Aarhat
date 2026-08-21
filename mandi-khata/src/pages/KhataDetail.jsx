@@ -32,7 +32,12 @@ export default function KhataDetail() {
   // Ledger rows arrive as translation keys (sales) or a raw cash entry.
   function describe(r) {
     if (r.descKey) {
-      return t(r.descKey, { ...r.descParams, fish: t(`fish.${r.descParams.fish}`) });
+      return t(r.descKey, {
+        ...r.descParams,
+        fish: t(`fish.${r.descParams.fish}`),
+        weightG: fmt.kg(r.descParams.weightG),
+        ratePaisaPerKg: r.descParams.ratePaisaPerKg === undefined ? '' : fmt.ratePerKg(r.descParams.ratePaisaPerKg),
+      });
     }
     const base = t(r.cash.direction === 'wasooli' ? 'cash.noteWasooli' : 'cash.notePayment');
     const note = cashNote(r.cash);
@@ -111,24 +116,42 @@ export default function KhataDetail() {
                   <td className="px-4 py-2.5 text-xs italic">{t('kd.opening')}</td>
                   <td className="px-4 py-2.5" />
                   <td className="px-4 py-2.5" />
-                  <td className={`px-4 py-2.5 text-end text-xs font-semibold ${party.openingBalance >= 0 ? 'text-green-700' : 'text-red-600'}`}>
-                    <span className="latin">{fmt.rs(party.openingBalance)}</span> {party.openingBalance >= 0 ? t('khata.lena') : t('khata.dena')}
+                  <td className={`px-4 py-2.5 text-end text-xs font-semibold ${party.openingPaisa >= 0 ? 'text-green-700' : 'text-red-600'}`}>
+                    <span className="latin">{fmt.rs(party.openingPaisa)}</span> {party.openingPaisa >= 0 ? t('khata.lena') : t('khata.dena')}
                   </td>
                 </tr>
-                {ledger.map((r) => (
-                  <tr key={r.id} className="hover:bg-gray-50">
-                    <td className="latin whitespace-nowrap px-4 py-3 text-gray-600">{fmt.date(r.date)}</td>
-                    <td className="px-4 py-3">
-                      <span className="text-gray-800">{describe(r)}</span>
-                      {r.status && <span className="ms-2 inline-block"><StatusBadge status={r.status} /></span>}
-                    </td>
-                    <td className="latin whitespace-nowrap px-4 py-3 text-end font-semibold text-gray-900">{r.debit ? fmt.rs(r.debit) : ''}</td>
-                    <td className="latin whitespace-nowrap px-4 py-3 text-end font-semibold text-green-700">{r.credit ? fmt.rs(r.credit) : ''}</td>
-                    <td className={`whitespace-nowrap px-4 py-3 text-end font-bold ${r.balance >= 0 ? 'text-green-700' : 'text-red-600'}`}>
-                      <span className="latin">{fmt.rs(r.balance)}</span> {r.balance >= 0 ? t('khata.lena') : t('khata.dena')}
-                    </td>
-                  </tr>
-                ))}
+                {ledger.map((r) => {
+                  // A voided row and its reversal both stay in the khata, so a
+                  // statement already handed to a party still reconciles. The
+                  // original is struck through; neither carries a live status.
+                  const isContra = Boolean(r.voidsId);
+                  const isVoided = Boolean(r.voidedBy);
+                  const struck = isVoided ? 'text-gray-400 line-through' : '';
+                  return (
+                    <tr key={r.id} className={isVoided ? 'bg-gray-50/60' : 'hover:bg-gray-50'}>
+                      <td className="latin whitespace-nowrap px-4 py-3 text-gray-600">{fmt.date(r.date)}</td>
+                      <td className="px-4 py-3">
+                        <span className={struck || 'text-gray-800'}>{describe(r)}</span>
+                        {isVoided && (
+                          <span className="ms-2 inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
+                            {t('status.Void')}
+                          </span>
+                        )}
+                        {isContra && (
+                          <span className="latin ms-2 text-xs font-medium text-gray-400">{t('roz.reverses', { id: r.voidsId })}</span>
+                        )}
+                        {r.status && !isVoided && !isContra && (
+                          <span className="ms-2 inline-block"><StatusBadge status={r.status} /></span>
+                        )}
+                      </td>
+                      <td className={`latin whitespace-nowrap px-4 py-3 text-end font-semibold ${struck || 'text-gray-900'}`}>{r.debit ? fmt.rs(r.debit) : ''}</td>
+                      <td className={`latin whitespace-nowrap px-4 py-3 text-end font-semibold ${struck || 'text-green-700'}`}>{r.credit ? fmt.rs(r.credit) : ''}</td>
+                      <td className={`whitespace-nowrap px-4 py-3 text-end font-bold ${r.balance >= 0 ? 'text-green-700' : 'text-red-600'}`}>
+                        <span className="latin">{fmt.rs(r.balance)}</span> {r.balance >= 0 ? t('khata.lena') : t('khata.dena')}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

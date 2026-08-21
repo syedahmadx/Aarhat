@@ -15,20 +15,23 @@ export default function Reports() {
   const data = useMemo(() => {
     if (invalidRange) return null;
     const inRange = (d) => d >= from && d <= to;
-    const rangeSales = sales.filter((s) => inRange(s.date));
-    const rangeCash = cashEntries.filter((c) => inRange(c.date));
+    // Voided entries and their reversals are excluded as a pair, so a voided
+    // sale neither inflates the count nor distorts a total.
+    const live = (r) => !r.voidsId && !r.voidedBy;
+    const rangeSales = sales.filter((s) => inRange(s.date) && live(s));
+    const rangeCash = cashEntries.filter((c) => inRange(c.date) && live(c));
 
-    const totalSales = rangeSales.reduce((s, x) => s + x.gross, 0);
-    const commission = rangeSales.reduce((s, x) => s + x.commission, 0);
-    const cashIn = rangeCash.filter((c) => c.direction === 'wasooli').reduce((s, c) => s + c.amount, 0);
-    const cashOut = rangeCash.filter((c) => c.direction === 'payment').reduce((s, c) => s + c.amount, 0);
+    const totalSales = rangeSales.reduce((s, x) => s + x.grossPaisa, 0);
+    const commission = rangeSales.reduce((s, x) => s + x.commissionPaisa, 0);
+    const cashIn = rangeCash.filter((c) => c.direction === 'wasooli').reduce((s, c) => s + c.amountPaisa, 0);
+    const cashOut = rangeCash.filter((c) => c.direction === 'payment').reduce((s, c) => s + c.amountPaisa, 0);
 
     const expensesByType = {};
     let totalExpenses = 0;
     for (const s of rangeSales) {
       for (const e of s.expenses) {
-        expensesByType[e.type] = (expensesByType[e.type] || 0) + e.amount;
-        totalExpenses += e.amount;
+        expensesByType[e.type] = (expensesByType[e.type] || 0) + e.amountPaisa;
+        totalExpenses += e.amountPaisa;
       }
     }
 
@@ -40,7 +43,7 @@ export default function Reports() {
       const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       byDay.set(iso, 0);
     }
-    for (const s of rangeSales) byDay.set(s.date, (byDay.get(s.date) || 0) + s.gross);
+    for (const s of rangeSales) byDay.set(s.date, (byDay.get(s.date) || 0) + s.grossPaisa);
     const days = [...byDay.entries()].map(([date, total]) => ({ date, total }));
 
     return { totalSales, commission, cashIn, cashOut, expensesByType, totalExpenses, days, saleCount: rangeSales.length };
