@@ -359,11 +359,11 @@ describe('migration from float fixtures to integer paisa', () => {
 
 describe('void and merge fixtures', () => {
   it('carries a party merged into another', () => {
-    const merged = initialParties.filter((p) => p.merged_into);
+    const merged = initialParties.filter((p) => p.mergedInto);
     expect(merged).toHaveLength(1);
-    const target = initialParties.find((p) => p.id === merged[0].merged_into);
+    const target = initialParties.find((p) => p.id === merged[0].mergedInto);
     expect(target).toBeDefined();
-    expect(target.merged_into).toBeNull(); // no merge chains
+    expect(target.mergedInto).toBeNull(); // no merge chains
     // Inert by construction: nothing is stranded behind the unimplemented merge.
     expect(merged[0].openingPaisa).toBe(0);
     expect(initialSales.some((s) => s.beopariId === merged[0].id || s.khareedarId === merged[0].id)).toBe(false);
@@ -371,13 +371,13 @@ describe('void and merge fixtures', () => {
   });
 
   it('represents a void as a reversing contra row, not a deletion', () => {
-    const contras = initialSales.filter((s) => s.voids_id);
+    const contras = initialSales.filter((s) => s.voidsId);
     expect(contras).toHaveLength(1);
     const contra = contras[0];
-    const original = initialSales.find((s) => s.id === contra.voids_id);
+    const original = initialSales.find((s) => s.id === contra.voidsId);
 
     expect(original).toBeDefined();
-    expect(original.voided_by).toBe(contra.id);
+    expect(original.voidedBy).toBe(contra.id);
     expect(contra.grossPaisa).toBe(-original.grossPaisa);
     expect(contra.commissionPaisa).toBe(-original.commissionPaisa);
     expect(contra.netPayoutPaisa).toBe(-original.netPayoutPaisa);
@@ -388,8 +388,8 @@ describe('void and merge fixtures', () => {
   });
 
   it('nets the voided pair to zero in both party balances', () => {
-    const contra = initialSales.find((s) => s.voids_id);
-    const original = initialSales.find((s) => s.id === contra.voids_id);
+    const contra = initialSales.find((s) => s.voidsId);
+    const original = initialSales.find((s) => s.id === contra.voidsId);
     const pair = [original, contra];
 
     for (const id of [original.beopariId, original.khareedarId]) {

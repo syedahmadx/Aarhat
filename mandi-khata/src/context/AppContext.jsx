@@ -16,7 +16,7 @@ function hhmm(d) {
 // A contra row reverses its original, so a voided pair always sums to zero.
 // Neither row is skipped here: both are real entries and both stay visible.
 function isVoidRow(row) {
-  return Boolean(row.voids_id) || Boolean(row.voided_by);
+  return Boolean(row.voidsId) || Boolean(row.voidedBy);
 }
 
 /**
@@ -28,7 +28,7 @@ function isVoidRow(row) {
  * Exported as a pure function so the migration test can check it directly
  * against the pre-conversion float fixtures.
  *
- * NOTE: a party with `merged_into` set is treated as an ordinary party here.
+ * NOTE: a party with `mergedInto` set is treated as an ordinary party here.
  * Folding a merged party's entries into its survivor is not implemented yet.
  */
 export function computePartyBalance(party, sales, cashEntries) {
@@ -80,7 +80,7 @@ export function AppProvider({ children }) {
             descKey: 'kd.saleDesc',
             descParams: { fish: s.fishType, weightG: s.weightG, ratePaisaPerKg: s.ratePaisaPerKg, gaari: s.gaari },
             debit: s.grossPaisa, credit: 0, status: s.status,
-            voids_id: s.voids_id, voided_by: s.voided_by,
+            voidsId: s.voidsId, voidedBy: s.voidedBy,
           });
         }
         if (s.beopariId === partyId) {
@@ -89,7 +89,7 @@ export function AppProvider({ children }) {
             descKey: 'kd.payoutDesc',
             descParams: { fish: s.fishType, weightG: s.weightG, gaari: s.gaari },
             debit: 0, credit: s.netPayoutPaisa, status: s.status,
-            voids_id: s.voids_id, voided_by: s.voided_by,
+            voidsId: s.voidsId, voidedBy: s.voidedBy,
           });
         }
       }
@@ -100,7 +100,7 @@ export function AppProvider({ children }) {
             cash: c,
             debit: c.direction === 'payment' ? c.amountPaisa : 0,
             credit: c.direction === 'wasooli' ? c.amountPaisa : 0,
-            voids_id: c.voids_id, voided_by: c.voided_by,
+            voidsId: c.voidsId, voidedBy: c.voidedBy,
           });
         }
       }
@@ -132,8 +132,8 @@ export function AppProvider({ children }) {
       netPayoutPaisa: netPayoutPaisa(gross, commission, expensesTotal),
       status: 'Pending',
       receivedPaisa: 0,
-      voids_id: null,
-      voided_by: null,
+      voidsId: null,
+      voidedBy: null,
     };
     setSales((prev) => [...prev, s]);
     return s;
@@ -142,7 +142,7 @@ export function AppProvider({ children }) {
   const addParty = useCallback((data) => {
     const p = {
       openingPaisa: 0,
-      merged_into: null,
+      mergedInto: null,
       ...data,
       id: `p${Date.now()}`,
     };
@@ -157,8 +157,8 @@ export function AppProvider({ children }) {
       ...data,
       id: `c${Date.now()}`,
       time: hhmm(new Date()),
-      voids_id: null,
-      voided_by: null,
+      voidsId: null,
+      voidedBy: null,
     };
     setCashEntries((prev) => [...prev, c]);
     if (c.direction === 'wasooli') {
@@ -210,10 +210,10 @@ export function AppProvider({ children }) {
         expensesTotalPaisa: -original.expensesTotalPaisa,
         netPayoutPaisa: -original.netPayoutPaisa,
         receivedPaisa: -original.receivedPaisa,
-        voids_id: original.id,
-        voided_by: null,
+        voidsId: original.id,
+        voidedBy: null,
       };
-      return [...prev.map((s) => (s.id === id ? { ...s, voided_by: contraId } : s)), contra];
+      return [...prev.map((s) => (s.id === id ? { ...s, voidedBy: contraId } : s)), contra];
     });
   }, []);
 
@@ -228,10 +228,10 @@ export function AppProvider({ children }) {
         date: todayISO(),
         time: hhmm(new Date()),
         amountPaisa: -original.amountPaisa,
-        voids_id: original.id,
-        voided_by: null,
+        voidsId: original.id,
+        voidedBy: null,
       };
-      return [...prev.map((c) => (c.id === id ? { ...c, voided_by: contraId } : c)), contra];
+      return [...prev.map((c) => (c.id === id ? { ...c, voidedBy: contraId } : c)), contra];
     });
   }, []);
 

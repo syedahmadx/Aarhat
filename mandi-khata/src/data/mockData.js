@@ -17,14 +17,14 @@ const HALF_BP = 5000; // 50%, reused to derive a Partial sale's received amount
 // negative = Dena (payable, we owe them). openingPaisa is the balance
 // before any of the mock sales / cash entries below.
 export const initialParties = [
-  { id: 'p1', name: 'Haji Rafiq',          nameUr: 'حاجی رفیق',        type: 'beopari',   phone: '0300-4571122', area: 'Ichhra',     areaUr: 'اچھرہ',     openingPaisa:  -4_500_000, merged_into: null },
-  { id: 'p2', name: 'Malik Shafqat',       nameUr: 'ملک شفقت',         type: 'beopari',   phone: '0321-8834455', area: 'Shadman',    areaUr: 'شادمان',    openingPaisa:   1_200_000, merged_into: null },
-  { id: 'p3', name: 'Chaudhry Aslam',      nameUr: 'چوہدری اسلم',      type: 'beopari',   phone: '0333-2216677', area: 'Model Town', areaUr: 'ماڈل ٹاؤن', openingPaisa:  -7_800_000, merged_into: null },
-  { id: 'p4', name: 'Rana Waseem',         nameUr: 'رانا وسیم',        type: 'beopari',   phone: '0345-9903311', area: 'Anarkali',   areaUr: 'انارکلی',   openingPaisa:           0, merged_into: null },
-  { id: 'p5', name: 'Shahid Machli Wala',  nameUr: 'شاہد مچھلی والا',  type: 'khareedar', phone: '0301-7712233', area: 'Ichhra',     areaUr: 'اچھرہ',     openingPaisa:   9_500_000, merged_into: null },
-  { id: 'p6', name: 'Akram Fish Corner',   nameUr: 'اکرم فش کارنر',    type: 'khareedar', phone: '0322-5541199', area: 'Anarkali',   areaUr: 'انارکلی',   openingPaisa:   3_400_000, merged_into: null },
-  { id: 'p7', name: 'Bismillah Fish House',nameUr: 'بسم اللہ فش ہاؤس', type: 'khareedar', phone: '0334-8890044', area: 'Shadman',    areaUr: 'شادمان',    openingPaisa:  -1_500_000, merged_into: null },
-  { id: 'p8', name: 'Karachi Sea Foods',   nameUr: 'کراچی سی فوڈز',    type: 'khareedar', phone: '0346-1123388', area: 'Model Town', areaUr: 'ماڈل ٹاؤن', openingPaisa:  15_200_000, merged_into: null },
+  { id: 'p1', name: 'Haji Rafiq',          nameUr: 'حاجی رفیق',        type: 'beopari',   phone: '0300-4571122', area: 'Ichhra',     areaUr: 'اچھرہ',     openingPaisa:  -4_500_000, mergedInto: null },
+  { id: 'p2', name: 'Malik Shafqat',       nameUr: 'ملک شفقت',         type: 'beopari',   phone: '0321-8834455', area: 'Shadman',    areaUr: 'شادمان',    openingPaisa:   1_200_000, mergedInto: null },
+  { id: 'p3', name: 'Chaudhry Aslam',      nameUr: 'چوہدری اسلم',      type: 'beopari',   phone: '0333-2216677', area: 'Model Town', areaUr: 'ماڈل ٹاؤن', openingPaisa:  -7_800_000, mergedInto: null },
+  { id: 'p4', name: 'Rana Waseem',         nameUr: 'رانا وسیم',        type: 'beopari',   phone: '0345-9903311', area: 'Anarkali',   areaUr: 'انارکلی',   openingPaisa:           0, mergedInto: null },
+  { id: 'p5', name: 'Shahid Machli Wala',  nameUr: 'شاہد مچھلی والا',  type: 'khareedar', phone: '0301-7712233', area: 'Ichhra',     areaUr: 'اچھرہ',     openingPaisa:   9_500_000, mergedInto: null },
+  { id: 'p6', name: 'Akram Fish Corner',   nameUr: 'اکرم فش کارنر',    type: 'khareedar', phone: '0322-5541199', area: 'Anarkali',   areaUr: 'انارکلی',   openingPaisa:   3_400_000, mergedInto: null },
+  { id: 'p7', name: 'Bismillah Fish House',nameUr: 'بسم اللہ فش ہاؤس', type: 'khareedar', phone: '0334-8890044', area: 'Shadman',    areaUr: 'شادمان',    openingPaisa:  -1_500_000, mergedInto: null },
+  { id: 'p8', name: 'Karachi Sea Foods',   nameUr: 'کراچی سی فوڈز',    type: 'khareedar', phone: '0346-1123388', area: 'Model Town', areaUr: 'ماڈل ٹاؤن', openingPaisa:  15_200_000, mergedInto: null },
 
   // FIXTURE — a duplicate party, merged into p6. Two munshis typing the same
   // khareedar slightly differently is the single most common data-entry fault
@@ -35,7 +35,7 @@ export const initialParties = [
   // entries reference it, so no money is stranded behind a merge that the
   // context does not yet resolve. Merge resolution (folding a merged party's
   // entries into its target) is NOT implemented — see the note in AppContext.
-  { id: 'p9', name: 'Akram Fish',          nameUr: 'اکرم فش',          type: 'khareedar', phone: '0322-5541199', area: 'Anarkali',   areaUr: 'انارکلی',   openingPaisa:           0, merged_into: 'p6' },
+  { id: 'p9', name: 'Akram Fish',          nameUr: 'اکرم فش',          type: 'khareedar', phone: '0322-5541199', area: 'Anarkali',   areaUr: 'انارکلی',   openingPaisa:           0, mergedInto: 'p6' },
 ];
 
 export const FISH_TYPES = ['Rohu', 'Thaila', 'Jhinga', 'Mori', 'Silver Carp'];
@@ -72,8 +72,8 @@ function sale(dayOffset, time, gaari, beopariId, khareedarId, fish, weightG, rat
     netPayoutPaisa: netPayoutPaisa(gross, commission, expensesTotal),
     status,
     receivedPaisa,
-    voids_id: null,  // set on a contra row, points at the sale it reverses
-    voided_by: null, // set on an original, points at the contra that voided it
+    voidsId: null,  // set on a contra row, points at the sale it reverses
+    voidedBy: null, // set on an original, points at the contra that voided it
   };
 }
 
@@ -93,8 +93,8 @@ function contraSale(original, dayOffset, time) {
     expensesTotalPaisa: -original.expensesTotalPaisa,
     netPayoutPaisa: -original.netPayoutPaisa,
     receivedPaisa: -original.receivedPaisa,
-    voids_id: original.id,
-    voided_by: null,
+    voidsId: original.id,
+    voidedBy: null,
   };
 }
 
@@ -124,7 +124,7 @@ const baseSales = [
 // the sale was reversed the same morning. Both rows stay in the day book.
 const voidedSale = sale(0, '08:15', 'LEC-7733', 'p2', 'p6', 'Mori', 80_000, 34_000, [{ type: 'Baraf', amountPaisa: 50_000 }], 'Pending');
 const voidingContra = contraSale(voidedSale, 0, '08:20');
-voidedSale.voided_by = voidingContra.id;
+voidedSale.voidedBy = voidingContra.id;
 
 export const initialSales = [...baseSales, voidedSale, voidingContra];
 
@@ -139,8 +139,8 @@ function cash(dayOffset, time, partyId, direction, amountPaisa, note, noteUr) {
     amountPaisa,
     note,
     noteUr,
-    voids_id: null,
-    voided_by: null,
+    voidsId: null,
+    voidedBy: null,
   };
 }
 

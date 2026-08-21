@@ -222,3 +222,28 @@ export function parseWeightKg(str) {
 export function parseRate(str) {
   return parseScaled(str, 2, 'parseRate', { allowNegative: false });
 }
+
+/**
+ * Parse a typed commission percentage into integer basis points.
+ * "6.25" -> 625. Exists so no component ever multiplies a percent by 100.
+ * @param {string} str
+ * @returns {number} integer basis points
+ */
+export function parsePercentBp(str) {
+  return parseScaled(str, 2, 'parsePercentBp', { allowNegative: false });
+}
+
+/**
+ * Display a weight: 190000 grams -> "190 kg". Trailing zeros are trimmed so
+ * whole kilos read as "190 kg", not "190.000 kg".
+ * @param {number} grams integer grams, may be negative on a contra row
+ * @returns {string}
+ */
+export function formatKg(grams) {
+  assertInteger(grams, 'grams');
+  const negative = grams < 0;
+  const abs = negative ? -BigInt(grams) : BigInt(grams);
+  const whole = abs / GRAMS_PER_KG;
+  const fraction = (abs % GRAMS_PER_KG).toString().padStart(3, '0').replace(/0+$/, '');
+  return `${negative ? '-' : ''}${whole}${fraction ? `.${fraction}` : ''}`;
+}

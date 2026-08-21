@@ -4,10 +4,33 @@ import { useApp } from '../context/AppContext';
 import { useLang } from '../i18n/LanguageContext';
 import { FISH_TYPES, EXPENSE_TYPES } from '../data/mockData';
 import { todayISO } from '../utils/format';
+import {
+  grossPaisa,
+  commissionPaisa,
+  netPayoutPaisa,
+  parseWeightKg,
+  parseRate,
+  parsePercentBp,
+  parsePKR,
+} from '../utils/money';
 import SearchableSelect from '../components/SearchableSelect';
 
 const inputCls = (err) =>
   `w-full rounded-lg border bg-white px-4 py-3 text-base text-gray-900 outline-none focus:border-primary-500 ${err ? 'border-red-400' : 'border-gray-300'}`;
+
+// The form holds raw strings, because that is what a person types. Every one
+// is converted to an integer by a money.js parser and never touched again.
+// Returns null rather than throwing so the live panel can stay quiet while a
+// field is half-typed; validate() is what turns a null into a message.
+function tryParse(parser, raw) {
+  try {
+    return parser(raw);
+  } catch {
+    return null;
+  }
+}
+
+const EMPTY_CALC = { gross: 0, commission: 0, expensesTotal: 0, net: 0 };
 
 function Field({ label, error, children }) {
   return (
@@ -37,23 +60,34 @@ export default function NewSale() {
   const [expenses, setExpenses] = useState([]);
   const [errors, setErrors] = useState({});
 
-  const beoparis = parties.filter((p) => p.type === 'beopari').map((p) => ({ value: p.id, label: partyName(p), sublabel: partyArea(p) }));
-  const khareedars = parties.filter((p) => p.type === 'khareedar').map((p) => ({ value: p.id, label: partyName(p), sublabel: partyArea(p) }));
+  const beoparis = parties
+    .filter((p) => p.type === 'beopari' && !p.mergedInto)
+    .map((p) => ({ value: p.id, label: partyName(p), sublabel: partyArea(p) }));
+  const khareedars = parties
+    .filter((p) => p.type === 'khareedar' && !p.mergedInto)
+    .map((p) => ({ value: p.id, label: partyName(p), sublabel: partyArea(p) }));
 
   const set = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
     setErrors((e) => ({ ...e, [k]: undefined }));
   };
 
-  // Live calculation
+  // Live panel. Runs the exact calls addSale will run, on the exact integers
+  // it will store, so what the munshi reads here is what lands in the khata.
   const calc = useMemo(() => {
-    const weight = parseFloat(form.weight) || 0;
-    const rate = parseFloat(form.rate) || 0;
-    const pct = parseFloat(form.commissionPct) || 0;
-    const gross = weight * rate;
-    const commission = Math.round((gross * pct) / 100);
-    const totalExpenses = expenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
-    return { gross, commission, totalExpenses, net: gross - commission - totalExpenses };
+    const weightG = tryParse(parseWeightKg, form.weight);
+    const ratePaisaPerKg = tryParse(parseRate, form.rate);
+    const commissionBp = tryParse(parsePercentBp, form.commissionPct);
+    if (weightG === null || ratePaisaPerKg === null || commissionBp === null) return EMPTY_CALC;
+    if (weightG <= 0 || ratePaisaPerKg <= 0) return EMPTY_CALC;
+
+    const gross = grossPaisa(weightG, ratePaisaPerKg);
+    const commission = commissionPaisa(gross, commissionBp);
+    const expensesTotal = expenses.reduce((sum, e) => {
+      const amount = tryParse(parsePKR, e.amount);
+      return sum + (amount !== null && amount > 0 ? amount : 0);
+    }, 0);
+    return { gross, commission, expensesTotal, net: netPayoutPaisa(gross, commission, expensesTotal) };
   }, [form.weight, form.rate, form.commissionPct, expenses]);
 
   const addExpenseRow = () => setExpenses((x) => [...x, { type: 'Baraf', amount: '' }]);
@@ -67,20 +101,24 @@ export default function NewSale() {
     if (!form.beopariId) e.beopariId = t('err.beopari');
     if (!form.khareedarId) e.khareedarId = t('err.khareedar');
     if (!form.fishType) e.fishType = t('err.fishType');
-    const weight = parseFloat(form.weight);
-    if (form.weight === '' || Number.isNaN(weight)) e.weight = t('err.weightReq');
-    else if (weight <= 0) e.weight = t('err.weightPos');
-    const rate = parseFloat(form.rate);
-    if (form.rate === '' || Number.isNaN(rate)) e.rate = t('err.rateReq');
-    else if (rate <= 0) e.rate = t('err.ratePos');
-    const pct = parseFloat(form.commissionPct);
-    if (form.commissionPct === '' || Number.isNaN(pct)) e.commissionPct = t('err.commissionReq');
-    else if (pct < 0) e.commissionPct = t('err.commissionNeg');
+
+    const weightG = tryParse(parseWeightKg, form.weight);
+    if (weightG === null) e.weight = t('err.weightReq');
+    else if (weightG <= 0) e.weight = t('err.weightPos');
+
+    const ratePaisaPerKg = tryParse(parseRate, form.rate);
+    if (ratePaisaPerKg === null) e.rate = t('err.rateReq');
+    else if (ratePaisaPerKg <= 0) e.rate = t('err.ratePos');
+
+    const commissionBp = tryParse(parsePercentBp, form.commissionPct);
+    if (commissionBp === null) e.commissionPct = t('err.commissionReq');
+
     expenses.forEach((x, i) => {
-      const amt = parseFloat(x.amount);
-      if (x.amount === '' || Number.isNaN(amt)) e[`exp${i}`] = t('err.amountReq');
-      else if (amt < 0) e[`exp${i}`] = t('err.amountNeg');
+      const amount = tryParse(parsePKR, x.amount);
+      if (amount === null) e[`exp${i}`] = t('err.amountReq');
+      else if (amount < 0) e[`exp${i}`] = t('err.amountNeg');
     });
+
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -97,10 +135,10 @@ export default function NewSale() {
       beopariId: form.beopariId,
       khareedarId: form.khareedarId,
       fishType: form.fishType,
-      weight: parseFloat(form.weight),
-      rate: parseFloat(form.rate),
-      commissionPct: parseFloat(form.commissionPct),
-      expenses: expenses.map((x) => ({ type: x.type, amount: parseFloat(x.amount) })),
+      weightG: parseWeightKg(form.weight),
+      ratePaisaPerKg: parseRate(form.rate),
+      commissionBp: parsePercentBp(form.commissionPct),
+      expenses: expenses.map((x) => ({ type: x.type, amountPaisa: parsePKR(x.amount) })),
     });
     showToast(t('toast.saleSaved'));
     navigate('/roznamcha');
@@ -188,7 +226,7 @@ export default function NewSale() {
             </div>
             <div className="flex justify-between gap-2">
               <dt className="text-gray-500">{t('sale.totalExpenses')}</dt>
-              <dd className="latin font-semibold text-red-600">- {fmt.rs(calc.totalExpenses)}</dd>
+              <dd className="latin font-semibold text-red-600">- {fmt.rs(calc.expensesTotal)}</dd>
             </div>
           </dl>
           <div className="mt-4 rounded-lg bg-primary-900 px-4 py-4 text-center">

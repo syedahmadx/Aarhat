@@ -12,6 +12,12 @@ Cloud (Supabase) is backup + licence only, never the source of truth.
 - All money math goes through src/utils/money.js. No Math.round anywhere else.
 - Identity, exactly: gross === commission + expensesTotal + netPayout
 
+## Naming
+- App code is camelCase, always: mergedInto, voidsId, voidedBy, openingPaisa.
+- The SQLite schema is snake_case (merged_into, voids_id, opening_paisa).
+  Mapping between the two happens in the data layer when SQLite lands, and
+  nowhere else. No snake_case reaches a component.
+
 ## Domain rules
 - Balance convention: positive = Lena (they owe us), negative = Dena (we owe them).
 - Never delete a sale or cash entry. A void posts a reversing contra entry on

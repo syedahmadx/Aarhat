@@ -17,11 +17,11 @@ const CHIPS = [
 ];
 
 export default function Roznamcha() {
-  const { sales, cashEntries, partyById, deleteSale, deleteCashEntry, showToast } = useApp();
+  const { sales, cashEntries, partyById, voidSale, voidCashEntry, showToast } = useApp();
   const { t, fmt, partyName, cashNote } = useLang();
   const [date, setDate] = useState(todayISO());
   const [chip, setChip] = useState('All');
-  const [toDelete, setToDelete] = useState(null);
+  const [toVoid, setToVoid] = useState(null);
 
   const entries = useMemo(() => {
     const rows = [];
@@ -30,8 +30,15 @@ export default function Roznamcha() {
       rows.push({
         kind: 'Sale', id: s.id, time: s.time,
         parties: `${partyName(partyById(s.beopariId))} → ${partyName(partyById(s.khareedarId))}`,
-        detail: t('kd.saleDesc', { fish: t(`fish.${s.fishType}`), weight: s.weight, rate: s.rate, gaari: s.gaari }),
-        amount: s.gross, status: s.status, cashIn: 0, cashOut: 0,
+        // Grams and paisa are converted to display strings here, at render.
+        detail: t('kd.saleDesc', {
+          fish: t(`fish.${s.fishType}`),
+          weightG: fmt.kg(s.weightG),
+          ratePaisaPerKg: fmt.ratePerKg(s.ratePaisaPerKg),
+          gaari: s.gaari,
+        }),
+        amountPaisa: s.grossPaisa, status: s.status, cashIn: 0, cashOut: 0,
+        voidsId: s.voidsId, voidedBy: s.voidedBy,
       });
     }
     for (const c of cashEntries) {
@@ -41,13 +48,14 @@ export default function Roznamcha() {
         kind: isIn ? 'Wasooli' : 'Payment', id: c.id, time: c.time,
         parties: partyName(partyById(c.partyId)) || '—',
         detail: cashNote(c) || t(isIn ? 'cash.noteWasooli' : 'cash.notePayment'),
-        amount: c.amount, status: null,
-        cashIn: isIn ? c.amount : 0, cashOut: isIn ? 0 : c.amount,
+        amountPaisa: c.amountPaisa, status: null,
+        cashIn: isIn ? c.amountPaisa : 0, cashOut: isIn ? 0 : c.amountPaisa,
+        voidsId: c.voidsId, voidedBy: c.voidedBy,
       });
     }
     rows.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
     return rows;
-  }, [sales, cashEntries, date, partyById, partyName, cashNote, t]);
+  }, [sales, cashEntries, date, partyById, partyName, cashNote, t, fmt]);
 
   const filtered = entries.filter((e) => {
     if (chip === 'All') return true;
@@ -56,15 +64,17 @@ export default function Roznamcha() {
     return e.kind === 'Payment';
   });
 
+  // A contra row carries the negated amount, so a voided pair contributes
+  // zero to the day totals without any special-casing here.
   const cashIn = entries.reduce((s, e) => s + e.cashIn, 0);
   const cashOut = entries.reduce((s, e) => s + e.cashOut, 0);
 
-  function confirmDelete() {
-    if (!toDelete) return;
-    if (toDelete.kind === 'Sale') deleteSale(toDelete.id);
-    else deleteCashEntry(toDelete.id);
-    setToDelete(null);
-    showToast(t('toast.entryDeleted'));
+  function confirmVoid() {
+    if (!toVoid) return;
+    if (toVoid.kind === 'Sale') voidSale(toVoid.id);
+    else voidCashEntry(toVoid.id);
+    setToVoid(null);
+    showToast(t('toast.entryVoided'));
   }
 
   const activeChipLabel = t(CHIPS.find((c) => c.key === chip)?.label || 'roz.all');
@@ -113,27 +123,65 @@ export default function Roznamcha() {
       ) : (
         <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
           <ul className="divide-y divide-gray-100">
-            {filtered.map((e) => (
-              <li key={`${e.kind}-${e.id}`} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
-                <span className="latin w-16 shrink-0 text-xs font-medium text-gray-400">{fmt.time(e.time)}</span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <TypeBadge type={e.kind} />
-                    <span className="truncate text-sm font-semibold text-gray-900">{e.parties}</span>
-                  </div>
-                  <p className="mt-0.5 truncate text-xs text-gray-500">{e.detail}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <div className="text-end">
-                    <p className={`latin text-sm font-bold ${e.kind === 'Payment' ? 'text-red-600' : e.kind === 'Wasooli' ? 'text-green-700' : 'text-gray-900'}`}>
-                      {fmt.rs(e.amount)}
+            {filtered.map((e) => {
+              const isContra = Boolean(e.voidsId);
+              const isVoided = Boolean(e.voidedBy);
+              return (
+                <li
+                  key={`${e.kind}-${e.id}`}
+                  className={`flex items-center gap-3 px-4 py-3.5 sm:px-5 ${isVoided ? 'bg-gray-50/60' : ''}`}
+                >
+                  <span className="latin w-16 shrink-0 text-xs font-medium text-gray-400">{fmt.time(e.time)}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <TypeBadge type={isContra ? 'Reversal' : e.kind} />
+                      <span className={`truncate text-sm font-semibold ${isVoided ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                        {e.parties}
+                      </span>
+                      {isVoided && (
+                        <span className="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
+                          {t('status.Void')}
+                        </span>
+                      )}
+                    </div>
+                    <p className={`mt-0.5 truncate text-xs ${isVoided ? 'text-gray-400 line-through' : 'text-gray-500'}`}>
+                      {e.detail}
                     </p>
-                    {e.status && <StatusBadge status={e.status} />}
+                    {isContra && <p className="latin mt-0.5 text-xs font-medium text-gray-400">{t('roz.reverses', { id: e.voidsId })}</p>}
+                    {isVoided && <p className="latin mt-0.5 text-xs font-medium text-gray-400">{t('roz.voidedBy', { id: e.voidedBy })}</p>}
                   </div>
-                  <DeleteButton onDelete={() => setToDelete({ kind: e.kind === 'Sale' ? 'Sale' : 'Cash', id: e.id, label: `${t(`type.${e.kind}`)} — ${fmt.rs(e.amount)}` })} />
-                </div>
-              </li>
-            ))}
+                  <div className="flex shrink-0 items-center gap-2">
+                    <div className="text-end">
+                      <p
+                        className={`latin text-sm font-bold ${
+                          isVoided ? 'text-gray-400 line-through'
+                            : isContra ? 'text-gray-500'
+                            : e.kind === 'Payment' ? 'text-red-600'
+                            : e.kind === 'Wasooli' ? 'text-green-700'
+                            : 'text-gray-900'
+                        }`}
+                      >
+                        {fmt.rs(e.amountPaisa)}
+                      </p>
+                      {e.status && !isContra && !isVoided && <StatusBadge status={e.status} />}
+                    </div>
+                    {/* A void is itself an entry; neither the original nor its
+                        reversal can be voided again. */}
+                    {!isContra && !isVoided && (
+                      <DeleteButton
+                        onDelete={() =>
+                          setToVoid({
+                            kind: e.kind === 'Sale' ? 'Sale' : 'Cash',
+                            id: e.id,
+                            label: `${t(`type.${e.kind}`)} — ${fmt.rs(e.amountPaisa)}`,
+                          })
+                        }
+                      />
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
           <div className="flex items-center justify-end gap-6 border-t border-gray-200 bg-gray-50 px-5 py-3">
             <div className="text-end">
@@ -153,13 +201,13 @@ export default function Roznamcha() {
       )}
 
       <ConfirmDialog
-        open={!!toDelete}
-        title={t('roz.deleteTitle')}
-        message={toDelete ? t('roz.deleteMsg', { label: toDelete.label }) : ''}
-        confirmLabel={t('common.delete')}
+        open={!!toVoid}
+        title={t('roz.voidTitle')}
+        message={toVoid ? t('roz.voidMsg', { label: toVoid.label }) : ''}
+        confirmLabel={t('roz.void')}
         danger
-        onConfirm={confirmDelete}
-        onCancel={() => setToDelete(null)}
+        onConfirm={confirmVoid}
+        onCancel={() => setToVoid(null)}
       />
     </div>
   );

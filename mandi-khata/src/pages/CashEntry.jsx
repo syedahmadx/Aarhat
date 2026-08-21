@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useLang } from '../i18n/LanguageContext';
 import { todayISO } from '../utils/format';
+import { parsePKR } from '../utils/money';
 import SearchableSelect from '../components/SearchableSelect';
 import ConfirmDialog from '../components/ConfirmDialog';
 
@@ -25,7 +26,7 @@ export default function CashEntry() {
   const [errors, setErrors] = useState({});
   const [confirming, setConfirming] = useState(false);
 
-  const options = parties.map((p) => ({ value: p.id, label: partyName(p), sublabel: t(`type.${p.type}`) }));
+  const options = parties.filter((p) => !p.mergedInto).map((p) => ({ value: p.id, label: partyName(p), sublabel: t(`type.${p.type}`) }));
   const party = partyById(form.partyId);
 
   const set = (k, v) => {
@@ -33,11 +34,20 @@ export default function CashEntry() {
     setErrors((e) => ({ ...e, [k]: undefined }));
   };
 
+  // Parsed once, at the boundary. Null while the field is empty or malformed;
+  // past this line the amount is only ever an integer number of paisa.
+  let amountPaisa = null;
+  try {
+    amountPaisa = parsePKR(form.amount);
+  } catch {
+    amountPaisa = null;
+  }
+
   function validate() {
     const e = {};
     if (!form.partyId) e.partyId = t('err.party');
-    const amt = parseFloat(form.amount);
-    if (form.amount === '' || Number.isNaN(amt)) e.amount = t('err.amountReq');
+    const amt = amountPaisa;
+    if (amt === null) e.amount = t('err.amountReq');
     else if (amt <= 0) e.amount = t('err.amountPos');
     if (!form.date) e.date = t('err.date');
     setErrors(e);
@@ -55,18 +65,18 @@ export default function CashEntry() {
     addCashEntry({
       partyId: form.partyId,
       direction: form.direction,
-      amount: parseFloat(form.amount),
+      amountPaisa,
       date: form.date,
       note,
       noteUr: note, // user-typed notes are stored as-is in both languages
     });
     setConfirming(false);
-    showToast(t(form.direction === 'wasooli' ? 'toast.wasooliSaved' : 'toast.paymentSaved', { amt: fmt.rs(parseFloat(form.amount)) }));
+    showToast(t(form.direction === 'wasooli' ? 'toast.wasooliSaved' : 'toast.paymentSaved', { amt: fmt.rs(amountPaisa) }));
     navigate(`/khatas/${form.partyId}`);
   }
 
   const isWasooli = form.direction === 'wasooli';
-  const amt = parseFloat(form.amount) || 0;
+  const amt = amountPaisa || 0;
 
   return (
     <div className="mx-auto max-w-lg space-y-4">

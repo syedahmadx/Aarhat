@@ -32,18 +32,23 @@ export default function Dashboard() {
   const { t, fmt, partyName } = useLang();
   const [date, setDate] = useState(todayISO());
 
-  const daySales = useMemo(() => sales.filter((s) => s.date === date), [sales, date]);
-  const dayCash = useMemo(() => cashEntries.filter((c) => c.date === date), [cashEntries, date]);
+  // A voided entry and its reversal both stay in the ledger. Dropping the
+  // pair is the same arithmetic as keeping both (they cancel) but it also
+  // keeps them out of the counts.
+  const live = (r) => !r.voidsId && !r.voidedBy;
+  const daySales = useMemo(() => sales.filter((s) => s.date === date && live(s)), [sales, date]);
+  const dayCash = useMemo(() => cashEntries.filter((c) => c.date === date && live(c)), [cashEntries, date]);
 
-  const totalSales = daySales.reduce((s, x) => s + x.gross, 0);
-  const commission = daySales.reduce((s, x) => s + x.commission, 0);
-  const cashIn = dayCash.filter((c) => c.direction === 'wasooli').reduce((s, c) => s + c.amount, 0);
-  const cashOut = dayCash.filter((c) => c.direction === 'payment').reduce((s, c) => s + c.amount, 0);
+  const totalSales = daySales.reduce((s, x) => s + x.grossPaisa, 0);
+  const commission = daySales.reduce((s, x) => s + x.commissionPaisa, 0);
+  const cashIn = dayCash.filter((c) => c.direction === 'wasooli').reduce((s, c) => s + c.amountPaisa, 0);
+  const cashOut = dayCash.filter((c) => c.direction === 'payment').reduce((s, c) => s + c.amountPaisa, 0);
 
   // Top 5 parties by outstanding receivable (Lena)
   const topUdhaar = useMemo(
     () =>
       parties
+        .filter((p) => !p.mergedInto)
         .map((p) => ({ ...p, balance: partyBalance(p.id) }))
         .filter((p) => p.balance > 0)
         .sort((a, b) => b.balance - a.balance)
