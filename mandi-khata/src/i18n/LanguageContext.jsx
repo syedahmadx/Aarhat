@@ -74,12 +74,14 @@ export function LanguageProvider({ children }) {
 
   // Party names and areas carry an Urdu spelling in the mock data.
   const partyName = useCallback((p) => (p ? (lang === 'ur' ? p.nameUr : p.name) : ''), [lang]);
+  // Fish types are per-shop rows now, so their names are data, not i18n keys.
+  const fishName = useCallback((f) => (f ? (lang === 'ur' ? f.nameUr || f.name : f.name) : ''), [lang]);
   const partyArea = useCallback((p) => (p ? (lang === 'ur' ? p.areaUr : p.area) : ''), [lang]);
   const cashNote = useCallback((c) => (c ? (lang === 'ur' ? c.noteUr || c.note : c.note) : ''), [lang]);
 
   const value = useMemo(
-    () => ({ lang, setLang, dir, t, fmt, partyName, partyArea, cashNote }),
-    [lang, dir, t, fmt, partyName, partyArea, cashNote]
+    () => ({ lang, setLang, dir, t, fmt, partyName, partyArea, cashNote, fishName }),
+    [lang, dir, t, fmt, partyName, partyArea, cashNote, fishName]
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

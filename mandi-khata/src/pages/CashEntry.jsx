@@ -60,19 +60,29 @@ export default function CashEntry() {
     setConfirming(true);
   }
 
-  function onConfirm() {
+  const [saving, setSaving] = useState(false);
+
+  async function onConfirm() {
+    if (saving) return;
     const note = form.note.trim();
-    addCashEntry({
-      partyId: form.partyId,
-      direction: form.direction,
-      amountPaisa,
-      date: form.date,
-      note,
-      noteUr: note, // user-typed notes are stored as-is in both languages
-    });
-    setConfirming(false);
-    showToast(t(form.direction === 'wasooli' ? 'toast.wasooliSaved' : 'toast.paymentSaved', { amt: fmt.rs(amountPaisa) }));
-    navigate(`/khatas/${form.partyId}`);
+    setSaving(true);
+    try {
+      await addCashEntry({
+        partyId: form.partyId,
+        direction: form.direction,
+        amountPaisa,
+        date: form.date,
+        note,
+        noteUr: note, // user-typed notes are stored as-is in both languages
+      });
+      setConfirming(false);
+      showToast(t(form.direction === 'wasooli' ? 'toast.wasooliSaved' : 'toast.paymentSaved', { amt: fmt.rs(amountPaisa) }));
+      navigate(`/khatas/${form.partyId}`);
+    } catch {
+      setSaving(false);
+      setConfirming(false);
+      showToast(t('toast.saveFailed'), 'error');
+    }
   }
 
   const isWasooli = form.direction === 'wasooli';
@@ -85,7 +95,7 @@ export default function CashEntry() {
         <p className="text-sm text-gray-500">{t('cash.subtitle')}</p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+      <form onSubmit={onSubmit} noValidate className="space-y-4 rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-gray-700">{t('cash.party')}</label>
           <SearchableSelect options={options} value={form.partyId} onChange={(v) => set('partyId', v)} placeholder={t('cash.selectParty')} error={errors.partyId} />
@@ -114,7 +124,7 @@ export default function CashEntry() {
 
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-gray-700">{t('cash.amount')}</label>
-          <input type="number" min="0" placeholder={t('cash.egAmount')} value={form.amount} onChange={(e) => set('amount', e.target.value)} className={inputCls(errors.amount) + ' latin'} />
+          <input type="number" min="0" step="0.01" placeholder={t('cash.egAmount')} value={form.amount} onChange={(e) => set('amount', e.target.value)} className={inputCls(errors.amount) + ' latin'} />
           {errors.amount && <p className="mt-1 text-xs font-medium text-red-600">{errors.amount}</p>}
           {amt > 0 && <p className="latin mt-1 text-xs font-semibold text-primary-700">{fmt.rs(amt)}</p>}
         </div>
@@ -130,7 +140,7 @@ export default function CashEntry() {
           <input type="text" placeholder={t('cash.egNote')} value={form.note} onChange={(e) => set('note', e.target.value)} className={inputCls(false)} />
         </div>
 
-        <button type="submit" className={`w-full rounded-lg px-4 py-3.5 text-base font-bold text-white ${isWasooli ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'}`}>
+        <button type="submit" disabled={saving} className={`w-full rounded-lg px-4 py-3.5 text-base font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 ${isWasooli ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'}`}>
           {t(isWasooli ? 'cash.saveWasooli' : 'cash.savePayment')}
         </button>
       </form>

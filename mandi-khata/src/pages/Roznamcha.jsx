@@ -18,7 +18,7 @@ const CHIPS = [
 
 export default function Roznamcha() {
   const { sales, cashEntries, partyById, voidSale, voidCashEntry, showToast } = useApp();
-  const { t, fmt, partyName, cashNote } = useLang();
+  const { t, fmt, partyName, cashNote, fishName } = useLang();
   const [date, setDate] = useState(todayISO());
   const [chip, setChip] = useState('All');
   const [toVoid, setToVoid] = useState(null);
@@ -32,7 +32,7 @@ export default function Roznamcha() {
         parties: `${partyName(partyById(s.beopariId))} → ${partyName(partyById(s.khareedarId))}`,
         // Grams and paisa are converted to display strings here, at render.
         detail: t('kd.saleDesc', {
-          fish: t(`fish.${s.fishType}`),
+          fish: fishName({ name: s.fishType, nameUr: s.fishTypeUr }),
           weightG: fmt.kg(s.weightG),
           ratePaisaPerKg: fmt.ratePerKg(s.ratePaisaPerKg),
           gaari: s.gaari,
@@ -55,7 +55,7 @@ export default function Roznamcha() {
     }
     rows.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
     return rows;
-  }, [sales, cashEntries, date, partyById, partyName, cashNote, t, fmt]);
+  }, [sales, cashEntries, date, partyById, partyName, cashNote, t, fmt, fishName]);
 
   const filtered = entries.filter((e) => {
     if (chip === 'All') return true;
@@ -69,12 +69,21 @@ export default function Roznamcha() {
   const cashIn = entries.reduce((s, e) => s + e.cashIn, 0);
   const cashOut = entries.reduce((s, e) => s + e.cashOut, 0);
 
-  function confirmVoid() {
-    if (!toVoid) return;
-    if (toVoid.kind === 'Sale') voidSale(toVoid.id);
-    else voidCashEntry(toVoid.id);
-    setToVoid(null);
-    showToast(t('toast.entryVoided'));
+  const [voiding, setVoiding] = useState(false);
+
+  async function confirmVoid() {
+    if (!toVoid || voiding) return;
+    setVoiding(true);
+    try {
+      if (toVoid.kind === 'Sale') await voidSale(toVoid.id);
+      else await voidCashEntry(toVoid.id);
+      showToast(t('toast.entryVoided'));
+    } catch {
+      showToast(t('toast.voidFailed'), 'error');
+    } finally {
+      setVoiding(false);
+      setToVoid(null);
+    }
   }
 
   const activeChipLabel = t(CHIPS.find((c) => c.key === chip)?.label || 'roz.all');

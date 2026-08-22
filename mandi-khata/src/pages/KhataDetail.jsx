@@ -9,7 +9,7 @@ export default function KhataDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { partyById, partyBalance, partyLedger } = useApp();
-  const { t, fmt, partyName, partyArea, cashNote } = useLang();
+  const { t, fmt, partyName, partyArea, cashNote, fishName } = useLang();
 
   const party = partyById(id);
   if (!party) {
@@ -34,7 +34,7 @@ export default function KhataDetail() {
     if (r.descKey) {
       return t(r.descKey, {
         ...r.descParams,
-        fish: t(`fish.${r.descParams.fish}`),
+        fish: fishName({ name: r.descParams.fish, nameUr: r.descParams.fishUr }),
         weightG: fmt.kg(r.descParams.weightG),
         ratePaisaPerKg: r.descParams.ratePaisaPerKg === undefined ? '' : fmt.ratePerKg(r.descParams.ratePaisaPerKg),
       });

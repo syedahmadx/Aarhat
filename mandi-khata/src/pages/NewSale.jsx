@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useLang } from '../i18n/LanguageContext';
-import { FISH_TYPES, EXPENSE_TYPES } from '../data/mockData';
+import { EXPENSE_TYPES } from '../data/mockData';
 import { todayISO } from '../utils/format';
 import {
   grossPaisa,
@@ -14,9 +14,9 @@ import {
   parsePKR,
 } from '../utils/money';
 import SearchableSelect from '../components/SearchableSelect';
+import FormField, { fieldInputCls } from '../components/FormField';
 
-const inputCls = (err) =>
-  `w-full rounded-lg border bg-white px-4 py-3 text-base text-gray-900 outline-none focus:border-primary-500 ${err ? 'border-red-400' : 'border-gray-300'}`;
+const inputCls = fieldInputCls;
 
 // The form holds raw strings, because that is what a person types. Every one
 // is converted to an integer by a money.js parser and never touched again.
@@ -42,9 +42,106 @@ function Field({ label, error, children }) {
   );
 }
 
+// A brand-new shop has no parties at all, so the first sale is impossible
+// without creating them right here. Minimal on purpose: name, optional Urdu
+// name, optional phone. The type is fixed by which picker opened the dialog.
+function NewPartyDialog({ type, onClose, onCreated }) {
+  const { addParty, showToast } = useApp();
+  const { t } = useLang();
+  const [name, setName] = useState('');
+  const [nameUr, setNameUr] = useState('');
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  async function onSave(ev) {
+    ev.preventDefault();
+    if (!name.trim()) {
+      setError(t('party.errName'));
+      return;
+    }
+    setSaving(true);
+    try {
+      const p = await addParty({
+        name: name.trim(),
+        nameUr: nameUr.trim() || null,
+        phone: phone.trim() || null,
+        type,
+      });
+      showToast(t('toast.partySaved'));
+      onCreated(p);
+    } catch {
+      setSaving(false);
+      setError(t('toast.saveFailed'));
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40" onClick={saving ? undefined : onClose} />
+      <form onSubmit={onSave} className="relative w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900">{t('party.newTitle')}</h3>
+          <p className="mt-0.5 text-sm text-gray-500">{t(`type.${type}`)}</p>
+        </div>
+        <FormField id="np-name" label={t('party.name')} error={error}>
+          <input
+            id="np-name"
+            type="text"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setError(null);
+            }}
+            className={fieldInputCls(error)}
+            autoFocus
+          />
+        </FormField>
+        <FormField id="np-name-ur" label={t('party.nameUr')}>
+          <input
+            id="np-name-ur"
+            type="text"
+            dir="rtl"
+            value={nameUr}
+            onChange={(e) => setNameUr(e.target.value)}
+            style={{ fontFamily: 'var(--font-urdu)' }}
+            className={fieldInputCls(false)}
+          />
+        </FormField>
+        <FormField id="np-phone" label={t('party.phone')}>
+          <input
+            id="np-phone"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className={fieldInputCls(false) + ' latin'}
+          />
+        </FormField>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 rounded-lg bg-primary-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-800 disabled:cursor-not-allowed disabled:bg-gray-300"
+          >
+            {saving ? t('prof.saving') : t('party.save')}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export default function NewSale() {
-  const { parties, addSale, showToast } = useApp();
-  const { t, fmt, partyName, partyArea } = useLang();
+  const { parties, fishTypes, addSale, showToast } = useApp();
+  const { t, fmt, partyName, partyArea, fishName } = useLang();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -52,13 +149,15 @@ export default function NewSale() {
     gaari: '',
     beopariId: '',
     khareedarId: '',
-    fishType: '',
+    fishTypeId: '',
     weight: '',
     rate: '',
     commissionPct: '6.25',
   });
   const [expenses, setExpenses] = useState([]);
   const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [addingParty, setAddingParty] = useState(null); // null | 'beopari' | 'khareedar'
 
   const beoparis = parties
     .filter((p) => p.type === 'beopari' && !p.mergedInto)
@@ -100,7 +199,7 @@ export default function NewSale() {
     if (!form.gaari.trim()) e.gaari = t('err.gaari');
     if (!form.beopariId) e.beopariId = t('err.beopari');
     if (!form.khareedarId) e.khareedarId = t('err.khareedar');
-    if (!form.fishType) e.fishType = t('err.fishType');
+    if (!form.fishTypeId) e.fishTypeId = t('err.fishType');
 
     const weightG = tryParse(parseWeightKg, form.weight);
     if (weightG === null) e.weight = t('err.weightReq');
@@ -123,29 +222,39 @@ export default function NewSale() {
     return Object.keys(e).length === 0;
   }
 
-  function onSave(ev) {
+  async function onSave(ev) {
     ev.preventDefault();
+    if (saving) return;
     if (!validate()) {
       showToast(t('toast.formErrors'), 'error');
       return;
     }
-    addSale({
-      date: form.date,
-      gaari: form.gaari.trim().toUpperCase(),
-      beopariId: form.beopariId,
-      khareedarId: form.khareedarId,
-      fishType: form.fishType,
-      weightG: parseWeightKg(form.weight),
-      ratePaisaPerKg: parseRate(form.rate),
-      commissionBp: parsePercentBp(form.commissionPct),
-      expenses: expenses.map((x) => ({ type: x.type, amountPaisa: parsePKR(x.amount) })),
-    });
-    showToast(t('toast.saleSaved'));
-    navigate('/roznamcha');
+    setSaving(true);
+    try {
+      await addSale({
+        date: form.date,
+        gaari: form.gaari.trim().toUpperCase(),
+        beopariId: form.beopariId,
+        khareedarId: form.khareedarId,
+        fishTypeId: form.fishTypeId,
+        weightG: parseWeightKg(form.weight),
+        ratePaisaPerKg: parseRate(form.rate),
+        commissionBp: parsePercentBp(form.commissionPct),
+        expenses: expenses.map((x) => ({ type: x.type, amountPaisa: parsePKR(x.amount) })),
+      });
+      showToast(t('toast.saleSaved'));
+      navigate('/roznamcha');
+    } catch {
+      setSaving(false);
+      showToast(t('toast.saveFailed'), 'error');
+    }
   }
 
   return (
-    <form onSubmit={onSave} className="grid gap-6 lg:grid-cols-3">
+    <>
+    {/* The dialog lives OUTSIDE this form: a form nested in a form does not
+        submit, so the dialog's own submit button would be dead inside it. */}
+    <form onSubmit={onSave} noValidate className="grid gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
         <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-base font-bold text-gray-900">{t('sale.details')}</h2>
@@ -158,21 +267,27 @@ export default function NewSale() {
             </Field>
             <Field label={t('sale.beopari')} error={errors.beopariId}>
               <SearchableSelect options={beoparis} value={form.beopariId} onChange={(v) => set('beopariId', v)} placeholder={t('sale.selectBeopari')} error={errors.beopariId} />
+              <button type="button" onClick={() => setAddingParty('beopari')} className="mt-1.5 text-xs font-semibold text-primary-700 hover:text-primary-900">
+                {t('sale.addNewParty')}
+              </button>
             </Field>
             <Field label={t('sale.khareedar')} error={errors.khareedarId}>
               <SearchableSelect options={khareedars} value={form.khareedarId} onChange={(v) => set('khareedarId', v)} placeholder={t('sale.selectKhareedar')} error={errors.khareedarId} />
+              <button type="button" onClick={() => setAddingParty('khareedar')} className="mt-1.5 text-xs font-semibold text-primary-700 hover:text-primary-900">
+                {t('sale.addNewParty')}
+              </button>
             </Field>
-            <Field label={t('sale.fishType')} error={errors.fishType}>
-              <select value={form.fishType} onChange={(e) => set('fishType', e.target.value)} className={inputCls(errors.fishType)}>
+            <Field label={t('sale.fishType')} error={errors.fishTypeId}>
+              <select value={form.fishTypeId} onChange={(e) => set('fishTypeId', e.target.value)} className={inputCls(errors.fishTypeId)}>
                 <option value="">{t('sale.selectPlaceholder')}</option>
-                {FISH_TYPES.map((f) => <option key={f} value={f}>{t(`fish.${f}`)}</option>)}
+                {fishTypes.map((f) => <option key={f.id} value={f.id}>{fishName(f)}</option>)}
               </select>
             </Field>
             <Field label={t('sale.weight')} error={errors.weight}>
-              <input type="number" min="0" step="0.5" placeholder={t('sale.egWeight')} value={form.weight} onChange={(e) => set('weight', e.target.value)} className={inputCls(errors.weight) + ' latin'} />
+              <input type="number" min="0" step="0.001" placeholder={t('sale.egWeight')} value={form.weight} onChange={(e) => set('weight', e.target.value)} className={inputCls(errors.weight) + ' latin'} />
             </Field>
             <Field label={t('sale.rate')} error={errors.rate}>
-              <input type="number" min="0" step="1" placeholder={t('sale.egRate')} value={form.rate} onChange={(e) => set('rate', e.target.value)} className={inputCls(errors.rate) + ' latin'} />
+              <input type="number" min="0" step="0.01" placeholder={t('sale.egRate')} value={form.rate} onChange={(e) => set('rate', e.target.value)} className={inputCls(errors.rate) + ' latin'} />
             </Field>
             <Field label={t('sale.commissionPct')} error={errors.commissionPct}>
               <input type="number" min="0" step="0.25" value={form.commissionPct} onChange={(e) => set('commissionPct', e.target.value)} className={inputCls(errors.commissionPct) + ' latin'} />
@@ -233,12 +348,28 @@ export default function NewSale() {
             <p className="text-xs font-medium uppercase tracking-wide text-primary-300">{t('sale.netPayout')}</p>
             <p className="latin mt-1 text-3xl font-extrabold text-white">{fmt.rs(calc.net)}</p>
           </div>
-          <button type="submit" className="mt-4 w-full rounded-lg bg-primary-700 px-4 py-3.5 text-base font-bold text-white hover:bg-primary-800">
-            {t('sale.save')}
+          <button
+            type="submit"
+            disabled={saving}
+            className="mt-4 w-full rounded-lg bg-primary-700 px-4 py-3.5 text-base font-bold text-white hover:bg-primary-800 disabled:cursor-not-allowed disabled:bg-gray-300"
+          >
+            {saving ? t('sale.saving') : t('sale.save')}
           </button>
           <p className="mt-2 text-center text-xs text-gray-400">{t('sale.pendingNote')}</p>
         </div>
       </div>
+
     </form>
+    {addingParty && (
+      <NewPartyDialog
+        type={addingParty}
+        onClose={() => setAddingParty(null)}
+        onCreated={(p) => {
+          set(addingParty === 'beopari' ? 'beopariId' : 'khareedarId', p.id);
+          setAddingParty(null);
+        }}
+      />
+    )}
+    </>
   );
 }
