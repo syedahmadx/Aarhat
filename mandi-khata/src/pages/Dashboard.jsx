@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { useLang } from '../i18n/LanguageContext';
 import { todayISO } from '../utils/format';
 import TypeBadge from '../components/TypeBadge';
+import EmptyState from '../components/EmptyState';
 
 function SummaryCard({ label, value, tone, icon }) {
   const tones = {
@@ -77,6 +78,18 @@ export default function Dashboard() {
         <SummaryCard label={t('dash.cashOut')} value={fmt.rs(cashOut)} tone="red" icon="M12 19.5v-15m0 0-6.75 6.75M12 4.5l6.75 6.75" />
         <SummaryCard label={t('dash.commission')} value={fmt.rs(commission)} tone="amber" icon="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
       </div>
+
+      {sales.length === 0 && cashEntries.length === 0 && (
+        <EmptyState
+          title={t('empty.salesTitle')}
+          subtitle={t('empty.salesSub')}
+          action={
+            <Link to="/new-sale" className="rounded-lg bg-primary-700 px-5 py-3 text-sm font-bold text-white hover:bg-primary-800">
+              {t('empty.firstSale')}
+            </Link>
+          }
+        />
+      )}
 
       <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 px-5 py-4">

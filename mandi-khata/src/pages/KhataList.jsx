@@ -71,7 +71,17 @@ export default function KhataList() {
         </div>
       </div>
 
-      {list.length === 0 ? (
+      {parties.filter((p) => !p.mergedInto).length === 0 ? (
+        <EmptyState
+          title={t('empty.partiesTitle')}
+          subtitle={t('empty.partiesSub')}
+          action={
+            <Link to="/new-sale" className="rounded-lg bg-primary-700 px-5 py-3 text-sm font-bold text-white hover:bg-primary-800">
+              {t('empty.firstSale')}
+            </Link>
+          }
+        />
+      ) : list.length === 0 ? (
         <EmptyState title={t('khata.emptyTitle')} subtitle={t('khata.emptySub')} />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">

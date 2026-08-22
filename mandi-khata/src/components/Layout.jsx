@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../i18n/LanguageContext';
 import Toast from './Toast';
+import DataState from './DataState';
 
 const NAV = [
   { to: '/dashboard', key: 'nav.dashboard', icon: 'M2.25 12 11.204 3.045c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75' },
@@ -149,7 +150,9 @@ export default function Layout({ children }) {
       </header>
 
       <main className="px-4 pb-24 pt-20 md:ms-60 md:px-8 md:pb-10">
-        <div className="mx-auto max-w-5xl">{children}</div>
+        <div className="mx-auto max-w-5xl">
+          {location.pathname.startsWith('/profile') ? children : <DataState>{children}</DataState>}
+        </div>
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-gray-200 bg-white md:hidden">
