@@ -6,6 +6,7 @@ import { todayISO } from '../utils/format';
 import { parsePKR } from '../utils/money';
 import SearchableSelect from '../components/SearchableSelect';
 import ConfirmDialog from '../components/ConfirmDialog';
+import Breadcrumbs from '../components/Breadcrumbs';
 
 const inputCls = (err) =>
   `w-full rounded-lg border bg-white px-4 py-3 text-base text-gray-900 outline-none focus:border-primary-500 ${err ? 'border-red-400' : 'border-gray-300'}`;
@@ -90,6 +91,7 @@ export default function CashEntry() {
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
+      <Breadcrumbs items={[{ label: t('nav.khatas'), to: '/khatas' }]} current={t('nav.cashEntry')} />
       <div>
         <h1 className="text-xl font-bold text-gray-900">{t('cash.title')}</h1>
         <p className="text-sm text-gray-500">{t('cash.subtitle')}</p>

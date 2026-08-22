@@ -22,6 +22,12 @@ export default function Roznamcha() {
   const [date, setDate] = useState(todayISO());
   const [chip, setChip] = useState('All');
   const [toVoid, setToVoid] = useState(null);
+  const [page, setPage] = useState(1);
+
+  const PAGE_SIZE = 25;
+  // A new day or filter is a new list; page 3 of the old one means nothing.
+  const pickDate = (d) => { setDate(d); setPage(1); };
+  const pickChip = (c) => { setChip(c); setPage(1); };
 
   const entries = useMemo(() => {
     const rows = [];
@@ -64,6 +70,10 @@ export default function Roznamcha() {
     return e.kind === 'Payment';
   });
 
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pages);
+  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   // A contra row carries the negated amount, so a voided pair contributes
   // zero to the day totals without any special-casing here.
   const cashIn = entries.reduce((s, e) => s + e.cashIn, 0);
@@ -98,7 +108,7 @@ export default function Roznamcha() {
         <input
           type="date"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={(e) => pickDate(e.target.value)}
           className="latin rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 outline-none focus:border-primary-500"
         />
       </div>
@@ -107,7 +117,7 @@ export default function Roznamcha() {
         {CHIPS.map((c) => (
           <button
             key={c.key}
-            onClick={() => setChip(c.key)}
+            onClick={() => pickChip(c.key)}
             className={
               chip === c.key
                 ? 'rounded-full bg-primary-700 px-4 py-2 text-sm font-semibold text-white'
@@ -132,7 +142,7 @@ export default function Roznamcha() {
       ) : (
         <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
           <ul className="divide-y divide-gray-100">
-            {filtered.map((e) => {
+            {pageRows.map((e) => {
               const isContra = Boolean(e.voidsId);
               const isVoided = Boolean(e.voidedBy);
               return (
@@ -192,7 +202,35 @@ export default function Roznamcha() {
               );
             })}
           </ul>
-          <div className="flex items-center justify-end gap-6 border-t border-gray-200 bg-gray-50 px-5 py-3">
+          {pages > 1 && (
+            <div className="flex items-center justify-between border-t border-gray-100 px-5 py-2.5">
+              <span className="latin text-xs font-medium text-gray-500">{t('roz.entriesCount', { n: filtered.length })}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage(safePage - 1)}
+                  disabled={safePage <= 1}
+                  aria-label={t('roz.prev')}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-primary-400 disabled:opacity-40"
+                >
+                  <svg className="h-4 w-4 rtl:rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+                </button>
+                <span className="latin text-xs font-semibold text-gray-600">{t('roz.pageOf', { page: safePage, pages })}</span>
+                <button
+                  type="button"
+                  onClick={() => setPage(safePage + 1)}
+                  disabled={safePage >= pages}
+                  aria-label={t('roz.next')}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-primary-400 disabled:opacity-40"
+                >
+                  <svg className="h-4 w-4 rtl:rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-4 border-t border-gray-200 bg-gray-50 px-5 py-3">
+            <span className="latin text-xs font-medium text-gray-500">{t('roz.entriesCount', { n: filtered.length })}</span>
+            <div className="flex items-center gap-6">
             <div className="text-end">
               <p className="text-xs font-medium text-gray-500">{t('dash.cashIn')}</p>
               <p className="latin text-sm font-bold text-green-700">{fmt.rs(cashIn)}</p>
@@ -204,6 +242,7 @@ export default function Roznamcha() {
             <div className="text-end">
               <p className="text-xs font-medium text-gray-500">{t('roz.net')}</p>
               <p className={`latin text-sm font-bold ${cashIn - cashOut >= 0 ? 'text-green-700' : 'text-red-600'}`}>{fmt.rs(cashIn - cashOut)}</p>
+            </div>
             </div>
           </div>
         </div>

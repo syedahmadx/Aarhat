@@ -330,6 +330,15 @@ export const translations = {
     'khata.noMatchSub': 'Loosen the filters or reset them to see every party.',
     'khata.chipSearch': 'Search: {q}',
 
+    // A4 stage 2: nav groups, breadcrumbs, pagination
+    'nav.groupDaily': 'Daily',
+    'nav.groupAccounts': 'Accounts',
+    'crumb.back': 'Back',
+    'roz.entriesCount': '{n} entries',
+    'roz.pageOf': 'Page {page} of {pages}',
+    'roz.prev': 'Previous page',
+    'roz.next': 'Next page',
+
     // Shared
     'common.search': 'Search…',
     'common.noParty': 'No party found',
@@ -668,6 +677,15 @@ export const translations = {
     'khata.noMatchTitle': 'ان فلٹرز پر کوئی پارٹی پوری نہیں اترتی',
     'khata.noMatchSub': 'فلٹر نرم کریں یا صاف کر کے تمام پارٹیاں دیکھیں۔',
     'khata.chipSearch': 'تلاش: {q}',
+
+    // A4 stage 2: nav groups, breadcrumbs, pagination
+    'nav.groupDaily': 'روزانہ',
+    'nav.groupAccounts': 'حسابات',
+    'crumb.back': 'واپس',
+    'roz.entriesCount': '{n} اندراجات',
+    'roz.pageOf': 'صفحہ {page} از {pages}',
+    'roz.prev': 'پچھلا صفحہ',
+    'roz.next': 'اگلا صفحہ',
 
     // Shared
     'common.search': 'تلاش کریں…',

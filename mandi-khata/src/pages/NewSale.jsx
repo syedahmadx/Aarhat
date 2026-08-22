@@ -15,6 +15,7 @@ import {
 } from '../utils/money';
 import SearchableSelect from '../components/SearchableSelect';
 import FormField, { fieldInputCls } from '../components/FormField';
+import Breadcrumbs from '../components/Breadcrumbs';
 
 const inputCls = fieldInputCls;
 
@@ -252,6 +253,9 @@ export default function NewSale() {
 
   return (
     <>
+    <div className="mb-4">
+      <Breadcrumbs items={[{ label: t('nav.roznamcha'), to: '/roznamcha' }]} current={t('nav.newSale')} />
+    </div>
     {/* The dialog lives OUTSIDE this form: a form nested in a form does not
         submit, so the dialog's own submit button would be dead inside it. */}
     <form onSubmit={onSave} noValidate className="grid gap-6 lg:grid-cols-3">
