@@ -319,6 +319,17 @@ export const translations = {
     'empty.dashSub': 'New sales and cash entries will show up here.',
     'empty.firstSale': 'Enter First Sale',
 
+    // Khata list: filters, sort, counts (A4 stage 1)
+    'khata.balanceFilter': 'Balance',
+    'khata.sortLabel': 'Sort',
+    'khata.sortName': 'Name',
+    'khata.sortBalance': 'Balance',
+    'khata.count': '{shown} of {total} parties',
+    'khata.reset': 'Reset Filters',
+    'khata.noMatchTitle': 'No parties match these filters',
+    'khata.noMatchSub': 'Loosen the filters or reset them to see every party.',
+    'khata.chipSearch': 'Search: {q}',
+
     // Shared
     'common.search': 'Search…',
     'common.noParty': 'No party found',
@@ -646,6 +657,17 @@ export const translations = {
     'empty.dashTitle': 'اس دن کا کوئی اندراج نہیں',
     'empty.dashSub': 'نئی سیل اور کیش انٹریاں یہاں نظر آئیں گی۔',
     'empty.firstSale': 'پہلی سیل درج کریں',
+
+    // Khata list: filters, sort, counts (A4 stage 1)
+    'khata.balanceFilter': 'بیلنس',
+    'khata.sortLabel': 'ترتیب',
+    'khata.sortName': 'نام',
+    'khata.sortBalance': 'بیلنس',
+    'khata.count': '{total} میں سے {shown} پارٹیاں',
+    'khata.reset': 'فلٹر صاف کریں',
+    'khata.noMatchTitle': 'ان فلٹرز پر کوئی پارٹی پوری نہیں اترتی',
+    'khata.noMatchSub': 'فلٹر نرم کریں یا صاف کر کے تمام پارٹیاں دیکھیں۔',
+    'khata.chipSearch': 'تلاش: {q}',
 
     // Shared
     'common.search': 'تلاش کریں…',
