@@ -15,6 +15,11 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   // Starts true so no route decision is made before we know who the user is.
   const [loading, setLoading] = useState(true);
+  // True while a profile fetch is in flight. Routes that branch on
+  // profile.shop_id must wait on this too: onAuthStateChange clears
+  // `loading` before the profile arrives, and deciding on a null profile
+  // would bounce an existing malik to /setup for a frame.
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // Guards against a late async response writing state after unmount, and
   // against an older profile fetch landing after a newer one.
@@ -27,13 +32,17 @@ export function AuthProvider({ children }) {
       return null;
     }
     const token = ++fetchToken.current;
+    setProfileLoading(true);
     const { data, error } = await supabase
       .from('profiles')
       .select('id, full_name, email, role, shop_id, created_at, updated_at')
       .eq('id', userId)
       .maybeSingle(); // RLS returns zero rows for anyone else's id, not an error
 
+    // A stale response must not clear profileLoading either — the newer
+    // fetch that superseded this one owns that flag now.
     if (!mounted.current || token !== fetchToken.current) return null;
+    setProfileLoading(false);
     if (error) {
       setProfile(null);
       return null;
@@ -154,14 +163,19 @@ export function AuthProvider({ children }) {
       session,
       user: session?.user ?? null,
       profile,
+      // Convenience reads off the profile row. shopId null means the user
+      // has not completed onboarding; routes send them to /setup.
+      shopId: profile?.shop_id ?? null,
+      role: profile?.role ?? null,
       loading,
+      profileLoading,
       signUp,
       signIn,
       signOut,
       updateProfile,
       refreshProfile: () => loadProfile(session?.user?.id),
     }),
-    [session, profile, loading, signUp, signIn, signOut, updateProfile, loadProfile]
+    [session, profile, loading, profileLoading, signUp, signIn, signOut, updateProfile, loadProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

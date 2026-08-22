@@ -21,13 +21,23 @@ function SessionLoading() {
   );
 }
 
-/** Signed-out users are sent to /signin, remembering where they were headed. */
+/**
+ * Signed-out users are sent to /signin, remembering where they were headed.
+ * Signed-in users without a shop are sent to /setup: every RLS policy in the
+ * ledger schema checks shop_id, so until onboarding runs the app would show
+ * a signed-in user nothing at all — forced onboarding beats looking broken.
+ */
 export function ProtectedRoute({ children }) {
-  const { session, loading } = useAuth();
+  const { session, loading, profile, profileLoading } = useAuth();
   const location = useLocation();
 
   if (loading) return <SessionLoading />;
   if (!session) return <Navigate to="/signin" replace state={{ from: location }} />;
+  // The shop decision must wait for the profile row, not run on its absence:
+  // right after sign-in the session exists a beat before the profile does,
+  // and deciding then would bounce an existing malik to /setup.
+  if (profileLoading) return <SessionLoading />;
+  if (!profile?.shop_id) return <Navigate to="/setup" replace />;
   return children;
 }
 
@@ -37,6 +47,20 @@ export function PublicOnlyRoute({ children }) {
 
   if (loading) return <SessionLoading />;
   if (session) return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
+/**
+ * /setup is the inverse of the shop gate: it needs a session but must NOT
+ * have a shop — a user who already onboarded gets sent to the dashboard,
+ * matching the database function, which refuses a second shop anyway.
+ */
+export function SetupRoute({ children }) {
+  const { session, loading, profile, profileLoading } = useAuth();
+
+  if (loading || (session && profileLoading)) return <SessionLoading />;
+  if (!session) return <Navigate to="/signin" replace />;
+  if (profile?.shop_id) return <Navigate to="/dashboard" replace />;
   return children;
 }
 

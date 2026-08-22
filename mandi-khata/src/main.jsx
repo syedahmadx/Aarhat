@@ -5,12 +5,13 @@ import './index.css';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './i18n/LanguageContext';
-import { ProtectedRoute, PublicOnlyRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, PublicOnlyRoute, SetupRoute } from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import Profile from './pages/Profile';
+import Setup from './pages/Setup';
 import Dashboard from './pages/Dashboard';
 import NewSale from './pages/NewSale';
 import Roznamcha from './pages/Roznamcha';
@@ -50,6 +51,9 @@ function App() {
       <Route path="/" element={<Root />} />
       <Route path="/signin" element={<PublicOnlyRoute><SignIn /></PublicOnlyRoute>} />
       <Route path="/signup" element={<PublicOnlyRoute><SignUp /></PublicOnlyRoute>} />
+
+      {/* Onboarding: needs a session, refuses a user who already has a shop */}
+      <Route path="/setup" element={<SetupRoute><Setup /></SetupRoute>} />
 
       {/* Ledger — unchanged apart from the dashboard moving off "/" */}
       <Route path="/dashboard" element={<AppRoute><Dashboard /></AppRoute>} />

@@ -277,6 +277,23 @@ export const translations = {
     'prof.role': 'Role',
     'prof.nav': 'Profile',
 
+    // Shop setup (onboarding)
+    'setup.title': 'Set up your shop',
+    'setup.subtitle': 'One shop per account — you will be its Malik (owner).',
+    'setup.shopName': 'Shop Name',
+    'setup.shopNameUr': 'Shop Name in Urdu',
+    'setup.optional': 'Optional — shown when the app is in Urdu.',
+    'setup.egName': 'e.g. Al-Madina Fish Traders',
+    'setup.egNameUr': 'مثلاً المدینہ فش ٹریڈرز',
+    'setup.note': 'Your shop gets its own khatas, roznamcha and fish list. You can rename fish types and add munshis later.',
+    'setup.submit': 'Create Shop',
+    'setup.creating': 'Creating shop…',
+    'setup.success': 'Shop created — welcome, Malik',
+    'setup.errNameReq': 'Shop name is required',
+    'setup.errHasShop': 'This account already has a shop.',
+    'setup.errSession': 'Your session has expired. Please sign in again.',
+    'setup.wrongAccount': 'Wrong account?',
+
     // Shared
     'common.search': 'Search…',
     'common.noParty': 'No party found',
@@ -562,6 +579,23 @@ export const translations = {
     'prof.noProfileSub': 'آپ کا اکاؤنٹ موجود ہے مگر پروفائل ابھی نہیں بنی۔ سائن آؤٹ کر کے دوبارہ سائن اِن کریں۔',
     'prof.role': 'کردار',
     'prof.nav': 'پروفائل',
+
+    // Shop setup (onboarding)
+    'setup.title': 'اپنی دکان سیٹ کریں',
+    'setup.subtitle': 'ہر اکاؤنٹ کی ایک دکان — آپ اس کے مالک ہوں گے۔',
+    'setup.shopName': 'دکان کا نام',
+    'setup.shopNameUr': 'دکان کا نام اردو میں',
+    'setup.optional': 'اختیاری — جب ایپ اردو میں ہو تو یہی دکھایا جائے گا۔',
+    'setup.egName': 'e.g. Al-Madina Fish Traders',
+    'setup.egNameUr': 'مثلاً المدینہ فش ٹریڈرز',
+    'setup.note': 'آپ کی دکان کے اپنے کھاتے، روزنامچہ اور مچھلی کی فہرست ہوگی۔ مچھلی کے نام اور منشی بعد میں بدلے اور شامل کیے جا سکتے ہیں۔',
+    'setup.submit': 'دکان بنائیں',
+    'setup.creating': 'دکان بن رہی ہے…',
+    'setup.success': 'دکان بن گئی — خوش آمدید، مالک',
+    'setup.errNameReq': 'دکان کا نام ضروری ہے',
+    'setup.errHasShop': 'اس اکاؤنٹ کی دکان پہلے سے موجود ہے۔',
+    'setup.errSession': 'سیشن ختم ہو گیا۔ دوبارہ سائن اِن کریں۔',
+    'setup.wrongAccount': 'غلط اکاؤنٹ؟',
 
     // Shared
     'common.search': 'تلاش کریں…',
