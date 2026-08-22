@@ -25,6 +25,9 @@ export function AuthProvider({ children }) {
   // against an older profile fetch landing after a newer one.
   const mounted = useRef(true);
   const fetchToken = useRef(0);
+  // The user id the current profile/loading state was derived from.
+  // `undefined` = nothing resolved yet; `null` = resolved as signed out.
+  const lastUserId = useRef(undefined);
 
   const loadProfile = useCallback(async (userId) => {
     if (!userId) {
@@ -54,13 +57,36 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     mounted.current = true;
 
+    // Supabase re-emits auth events on tab focus (TOKEN_REFRESHED, and
+    // SIGNED_IN again for the same user). The old handler re-fetched the
+    // profile on every event, which flipped profileLoading, which made the
+    // route guards swap the page for a spinner — UNMOUNTING whatever form
+    // the user was typing into. Coming back to the tab wiped a half-entered
+    // sale. So: both the initial resolve and every later event funnel
+    // through one function that only treats a CHANGED user id as news.
+    const apply = (nextSession) => {
+      const nextId = nextSession?.user?.id ?? null;
+      const changed = nextId !== lastUserId.current;
+      lastUserId.current = nextId;
+      // Keep the session object current even on a routine refresh — it
+      // carries the new access token. A state update alone only re-renders;
+      // re-rendering does not lose form state, unmounting does.
+      setSession(nextSession ?? null);
+      if (!changed) return; // token refresh / focus re-emit: nothing else moves
+      if (nextId) {
+        loadProfile(nextId);
+      } else {
+        setProfile(null);
+      }
+    };
+
     // Resolve the persisted session once on mount, before any redirecting.
+    // The id-dedupe in apply() makes the race between this and the
+    // INITIAL_SESSION event harmless: whichever lands second is a no-op.
     supabase.auth
       .getSession()
-      .then(async ({ data }) => {
-        if (!mounted.current) return;
-        setSession(data.session ?? null);
-        if (data.session?.user) await loadProfile(data.session.user.id);
+      .then(({ data }) => {
+        if (mounted.current) apply(data.session);
       })
       .finally(() => {
         if (mounted.current) setLoading(false);
@@ -68,17 +94,15 @@ export function AuthProvider({ children }) {
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted.current) return;
-      setSession(nextSession ?? null);
-      if (nextSession?.user) {
-        loadProfile(nextSession.user.id);
-      } else {
-        setProfile(null);
-      }
+      apply(nextSession);
       setLoading(false);
     });
 
     return () => {
       mounted.current = false;
+      // Reset so a remount (StrictMode double-invoke, HMR) re-derives the
+      // profile instead of treating the fresh mount as "already handled".
+      lastUserId.current = undefined;
       sub.subscription.unsubscribe();
     };
   }, [loadProfile]);
