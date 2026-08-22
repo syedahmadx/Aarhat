@@ -1,11 +1,54 @@
 import { createContext, useContext, useMemo, useState, useCallback } from 'react';
 import { initialParties, initialSales, initialCashEntries } from '../data/mockData';
+import { grossPaisa, commissionPaisa, netPayoutPaisa } from '../utils/money';
+import { todayISO } from '../utils/format';
 
 const AppContext = createContext(null);
 
+// All money below is integer paisa, all weights integer grams. Nothing in this
+// file does its own arithmetic on an amount beyond adding and negating whole
+// paisa — every derived figure comes from utils/money.js.
+
+function hhmm(d) {
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+// A contra row reverses its original, so a voided pair always sums to zero.
+// Neither row is skipped here: both are real entries and both stay visible.
+function isVoidRow(row) {
+  return Boolean(row.voidsId) || Boolean(row.voidedBy);
+}
+
+/**
+ * Balance for one party, in integer paisa.
+ * Convention: positive = Lena (they owe us), negative = Dena (we owe them).
+ * A sale debits the khareedar the gross and credits the beopari the net payout.
+ * Wasooli (cash in) lowers a balance; payment (cash out) raises it.
+ *
+ * Exported as a pure function so the migration test can check it directly
+ * against the pre-conversion float fixtures.
+ *
+ * NOTE: a party with `mergedInto` set is treated as an ordinary party here.
+ * Folding a merged party's entries into its survivor is not implemented yet.
+ */
+export function computePartyBalance(party, sales, cashEntries) {
+  if (!party) return 0;
+  let bal = party.openingPaisa;
+  for (const s of sales) {
+    if (s.khareedarId === party.id) bal += s.grossPaisa;
+    if (s.beopariId === party.id) bal -= s.netPayoutPaisa;
+  }
+  for (const c of cashEntries) {
+    if (c.partyId === party.id) {
+      bal += c.direction === 'wasooli' ? -c.amountPaisa : c.amountPaisa;
+    }
+  }
+  return bal;
+}
+
 export function AppProvider({ children }) {
   const [role, setRole] = useState('malik'); // 'malik' | 'munshi'
-  const [parties] = useState(initialParties);
+  const [parties, setParties] = useState(initialParties);
   const [sales, setSales] = useState(initialSales);
   const [cashEntries, setCashEntries] = useState(initialCashEntries);
   const [toast, setToast] = useState(null);
@@ -17,23 +60,8 @@ export function AppProvider({ children }) {
 
   const partyById = useCallback((id) => parties.find((p) => p.id === id), [parties]);
 
-  // Balance convention: positive = Lena (they owe us), negative = Dena (we owe them).
-  // Sale: khareedar owes gross; we owe beopari the net payout.
-  // Wasooli (cash received from party) lowers their balance; Payment (paid out) raises it.
   const partyBalance = useCallback(
-    (partyId) => {
-      const p = partyById(partyId);
-      if (!p) return 0;
-      let bal = p.openingBalance;
-      for (const s of sales) {
-        if (s.khareedarId === partyId) bal += s.gross;
-        if (s.beopariId === partyId) bal -= s.netPayout;
-      }
-      for (const c of cashEntries) {
-        if (c.partyId === partyId) bal += c.direction === 'wasooli' ? -c.amount : c.amount;
-      }
-      return bal;
-    },
+    (partyId) => computePartyBalance(partyById(partyId), sales, cashEntries),
     [partyById, sales, cashEntries]
   );
 
@@ -50,16 +78,18 @@ export function AppProvider({ children }) {
           rows.push({
             id: `sale-${s.id}`, date: s.date, time: s.time,
             descKey: 'kd.saleDesc',
-            descParams: { fish: s.fishType, weight: s.weight, rate: s.rate, gaari: s.gaari },
-            debit: s.gross, credit: 0, status: s.status,
+            descParams: { fish: s.fishType, weightG: s.weightG, ratePaisaPerKg: s.ratePaisaPerKg, gaari: s.gaari },
+            debit: s.grossPaisa, credit: 0, status: s.status,
+            voidsId: s.voidsId, voidedBy: s.voidedBy,
           });
         }
         if (s.beopariId === partyId) {
           rows.push({
             id: `sale-b-${s.id}`, date: s.date, time: s.time,
             descKey: 'kd.payoutDesc',
-            descParams: { fish: s.fishType, weight: s.weight, gaari: s.gaari },
-            debit: 0, credit: s.netPayout, status: s.status,
+            descParams: { fish: s.fishType, weightG: s.weightG, gaari: s.gaari },
+            debit: 0, credit: s.netPayoutPaisa, status: s.status,
+            voidsId: s.voidsId, voidedBy: s.voidedBy,
           });
         }
       }
@@ -68,13 +98,14 @@ export function AppProvider({ children }) {
           rows.push({
             id: `cash-${c.id}`, date: c.date, time: c.time,
             cash: c,
-            debit: c.direction === 'payment' ? c.amount : 0,
-            credit: c.direction === 'wasooli' ? c.amount : 0,
+            debit: c.direction === 'payment' ? c.amountPaisa : 0,
+            credit: c.direction === 'wasooli' ? c.amountPaisa : 0,
+            voidsId: c.voidsId, voidedBy: c.voidedBy,
           });
         }
       }
       rows.sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
-      let bal = p.openingBalance;
+      let bal = p.openingPaisa;
       return rows.map((r) => {
         bal += r.debit - r.credit;
         return { ...r, balance: bal };
@@ -83,76 +114,136 @@ export function AppProvider({ children }) {
     [partyById, sales, cashEntries]
   );
 
-  const addSale = useCallback(
-    (data) => {
-      const gross = data.weight * data.rate;
-      const commission = Math.round((gross * data.commissionPct) / 100);
-      const totalExpenses = data.expenses.reduce((s, e) => s + e.amount, 0);
-      const now = new Date();
-      const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const s = {
-        ...data,
-        id: `s${Date.now()}`,
-        time,
-        gross,
-        commission,
-        totalExpenses,
-        netPayout: gross - commission - totalExpenses,
-        status: 'Pending',
-        receivedAmount: 0,
-      };
-      setSales((prev) => [...prev, s]);
-      return s;
-    },
-    []
-  );
+  /**
+   * @param {object} data weightG, ratePaisaPerKg, commissionBp integers;
+   *                      expenses is [{ type, amountPaisa }]
+   */
+  const addSale = useCallback((data) => {
+    const gross = grossPaisa(data.weightG, data.ratePaisaPerKg);
+    const commission = commissionPaisa(gross, data.commissionBp);
+    const expensesTotal = data.expenses.reduce((sum, e) => sum + e.amountPaisa, 0);
+    const s = {
+      ...data,
+      id: `s${Date.now()}`,
+      time: hhmm(new Date()),
+      grossPaisa: gross,
+      commissionPaisa: commission,
+      expensesTotalPaisa: expensesTotal,
+      netPayoutPaisa: netPayoutPaisa(gross, commission, expensesTotal),
+      status: 'Pending',
+      receivedPaisa: 0,
+      voidsId: null,
+      voidedBy: null,
+    };
+    setSales((prev) => [...prev, s]);
+    return s;
+  }, []);
+
+  const addParty = useCallback((data) => {
+    const p = {
+      openingPaisa: 0,
+      mergedInto: null,
+      ...data,
+      id: `p${Date.now()}`,
+    };
+    setParties((prev) => [...prev, p]);
+    return p;
+  }, []);
 
   // Records a cash entry. A wasooli from a khareedar is also allocated against
   // that party's unpaid sales (oldest first) so statuses move Pending → Partial → Paid.
-  const addCashEntry = useCallback(
-    (data) => {
-      const now = new Date();
-      const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const c = { ...data, id: `c${Date.now()}`, time };
-      setCashEntries((prev) => [...prev, c]);
-      if (c.direction === 'wasooli') {
-        setSales((prev) => {
-          let remaining = c.amount;
-          const ordered = [...prev].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-          const updated = new Map();
-          for (const s of ordered) {
-            if (remaining <= 0) break;
-            if (s.khareedarId !== c.partyId || s.status === 'Paid') continue;
-            const due = s.gross - s.receivedAmount;
-            const applied = Math.min(due, remaining);
-            remaining -= applied;
-            const received = s.receivedAmount + applied;
-            updated.set(s.id, {
-              ...s,
-              receivedAmount: received,
-              status: received >= s.gross ? 'Paid' : received > 0 ? 'Partial' : 'Pending',
-            });
-          }
-          return prev.map((s) => updated.get(s.id) || s);
-        });
-      }
-      return c;
-    },
-    []
-  );
+  const addCashEntry = useCallback((data) => {
+    const c = {
+      ...data,
+      id: `c${Date.now()}`,
+      time: hhmm(new Date()),
+      voidsId: null,
+      voidedBy: null,
+    };
+    setCashEntries((prev) => [...prev, c]);
+    if (c.direction === 'wasooli') {
+      setSales((prev) => {
+        let remaining = c.amountPaisa;
+        const ordered = [...prev].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+        const updated = new Map();
+        for (const s of ordered) {
+          if (remaining <= 0) break;
+          if (s.khareedarId !== c.partyId || s.status === 'Paid') continue;
+          // A contra row carries a negative gross and a voided original is no
+          // longer owed. Allocating against either would hand the remaining
+          // cash back to itself and over-allocate the rest of the sales.
+          if (isVoidRow(s)) continue;
+          const due = s.grossPaisa - s.receivedPaisa;
+          if (due <= 0) continue;
+          const applied = Math.min(due, remaining);
+          remaining -= applied;
+          const received = s.receivedPaisa + applied;
+          updated.set(s.id, {
+            ...s,
+            receivedPaisa: received,
+            status: received >= s.grossPaisa ? 'Paid' : received > 0 ? 'Partial' : 'Pending',
+          });
+        }
+        return prev.map((s) => updated.get(s.id) || s);
+      });
+    }
+    return c;
+  }, []);
 
-  const deleteSale = useCallback((id) => setSales((prev) => prev.filter((s) => s.id !== id)), []);
-  const deleteCashEntry = useCallback((id) => setCashEntries((prev) => prev.filter((c) => c.id !== id)), []);
+  // Voiding never removes a row. It appends a reversing contra entry dated
+  // today and marks the original, so the day book keeps its history and any
+  // parchi already handed to a party still reconciles.
+  const voidSale = useCallback((id) => {
+    setSales((prev) => {
+      const original = prev.find((s) => s.id === id);
+      if (!original || isVoidRow(original)) return prev;
+      const contraId = `s${Date.now()}`;
+      const contra = {
+        ...original,
+        id: contraId,
+        date: todayISO(),
+        time: hhmm(new Date()),
+        weightG: -original.weightG,
+        expenses: original.expenses.map((e) => ({ ...e, amountPaisa: -e.amountPaisa })),
+        grossPaisa: -original.grossPaisa,
+        commissionPaisa: -original.commissionPaisa,
+        expensesTotalPaisa: -original.expensesTotalPaisa,
+        netPayoutPaisa: -original.netPayoutPaisa,
+        receivedPaisa: -original.receivedPaisa,
+        voidsId: original.id,
+        voidedBy: null,
+      };
+      return [...prev.map((s) => (s.id === id ? { ...s, voidedBy: contraId } : s)), contra];
+    });
+  }, []);
+
+  const voidCashEntry = useCallback((id) => {
+    setCashEntries((prev) => {
+      const original = prev.find((c) => c.id === id);
+      if (!original || isVoidRow(original)) return prev;
+      const contraId = `c${Date.now()}`;
+      const contra = {
+        ...original,
+        id: contraId,
+        date: todayISO(),
+        time: hhmm(new Date()),
+        amountPaisa: -original.amountPaisa,
+        voidsId: original.id,
+        voidedBy: null,
+      };
+      return [...prev.map((c) => (c.id === id ? { ...c, voidedBy: contraId } : c)), contra];
+    });
+  }, []);
 
   const value = useMemo(
     () => ({
       role, setRole,
       parties, sales, cashEntries,
       partyById, partyBalance, partyLedger,
-      addSale, addCashEntry, deleteSale, deleteCashEntry,
+      addSale, addParty, addCashEntry, voidSale, voidCashEntry,
       toast, showToast,
     }),
-    [role, parties, sales, cashEntries, partyById, partyBalance, partyLedger, addSale, addCashEntry, deleteSale, deleteCashEntry, toast, showToast]
+    [role, parties, sales, cashEntries, partyById, partyBalance, partyLedger, addSale, addParty, addCashEntry, voidSale, voidCashEntry, toast, showToast]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

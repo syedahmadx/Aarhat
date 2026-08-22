@@ -1,10 +1,11 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { useLang } from '../i18n/LanguageContext';
 import Toast from './Toast';
 
 const NAV = [
-  { to: '/', key: 'nav.dashboard', icon: 'M2.25 12 11.204 3.045c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75' },
+  { to: '/dashboard', key: 'nav.dashboard', icon: 'M2.25 12 11.204 3.045c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75' },
   { to: '/new-sale', key: 'nav.newSale', icon: 'M12 4.5v15m7.5-7.5h-15' },
   { to: '/roznamcha', key: 'nav.roznamcha', icon: 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25' },
   { to: '/khatas', key: 'nav.khatas', icon: 'M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z' },
@@ -45,12 +46,57 @@ function LangToggle() {
   );
 }
 
+// Profile link plus sign-out, sitting beside the role switcher in the header.
+// The role switcher above is still the mock Malik/Munshi toggle from
+// AppContext; it is unrelated to profiles.role and stays that way for now.
+function UserMenu() {
+  const { profile, user, signOut } = useAuth();
+  const { showToast } = useApp();
+  const { t } = useLang();
+  const navigate = useNavigate();
+
+  const label = profile?.full_name || profile?.email || user?.email || '';
+  const initial = label ? label.charAt(0).toUpperCase() : '?';
+
+  async function onSignOut() {
+    await signOut();
+    showToast(t('auth.signOutSuccess'));
+    navigate('/', { replace: true });
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <Link
+        to="/profile"
+        title={label}
+        aria-label={t('prof.nav')}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-800 transition hover:bg-primary-200"
+      >
+        <span className="latin">{initial}</span>
+      </Link>
+      <button
+        type="button"
+        onClick={onSignOut}
+        aria-label={t('auth.signOut')}
+        title={t('auth.signOut')}
+        className="rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
+      >
+        <svg className="h-5 w-5 rtl:-scale-x-100" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 export default function Layout({ children }) {
   const { role, setRole } = useApp();
   const { t } = useLang();
   const location = useLocation();
   const items = NAV.filter((n) => !n.ownerOnly || role === 'malik');
-  const current = NAV.find((n) => (n.to === '/' ? location.pathname === '/' : location.pathname.startsWith(n.to)));
+  const current =
+    NAV.find((n) => location.pathname.startsWith(n.to)) ||
+    (location.pathname.startsWith('/profile') ? { key: 'prof.nav' } : null);
 
   return (
     <div className="min-h-screen">
@@ -67,7 +113,6 @@ export default function Layout({ children }) {
             <NavLink
               key={n.to}
               to={n.to}
-              end={n.to === '/'}
               className={({ isActive }) =>
                 isActive
                   ? 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium bg-primary-700 text-white'
@@ -99,6 +144,7 @@ export default function Layout({ children }) {
             <option value="malik">{t('role.malik')}</option>
             <option value="munshi">{t('role.munshi')}</option>
           </select>
+          <UserMenu />
         </div>
       </header>
 
@@ -111,7 +157,6 @@ export default function Layout({ children }) {
           <NavLink
             key={n.to}
             to={n.to}
-            end={n.to === '/'}
             className={({ isActive }) =>
               isActive
                 ? 'flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-primary-700'

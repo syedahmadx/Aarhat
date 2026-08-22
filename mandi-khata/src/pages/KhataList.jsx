@@ -20,6 +20,7 @@ export default function KhataList() {
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
     return parties
+      .filter((p) => !p.mergedInto)
       .filter((p) => filter === 'all' || p.type === filter)
       .filter(
         (p) =>
