@@ -9,7 +9,7 @@ import {
   parseRate,
 } from './money';
 import { initialParties, initialSales, initialCashEntries } from '../data/mockData';
-import { computePartyBalance } from '../context/AppContext';
+import { computePartyBalance } from '../data/ledgerMath';
 
 // Seeded PRNG so a failing random case is reproducible instead of a ghost.
 function mulberry32(seed) {

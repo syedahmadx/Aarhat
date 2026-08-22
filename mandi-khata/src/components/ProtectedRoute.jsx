@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { DATA_SOURCE } from '../data/repo';
 import { useLang } from '../i18n/LanguageContext';
 
 // Shown while the persisted session is still resolving. Without this, a
@@ -33,11 +34,16 @@ export function ProtectedRoute({ children }) {
 
   if (loading) return <SessionLoading />;
   if (!session) return <Navigate to="/signin" replace state={{ from: location }} />;
-  // The shop decision must wait for the profile row, not run on its absence:
-  // right after sign-in the session exists a beat before the profile does,
-  // and deciding then would bounce an existing malik to /setup.
-  if (profileLoading) return <SessionLoading />;
-  if (!profile?.shop_id) return <Navigate to="/setup" replace />;
+  // The shop gate exists because RLS-scoped reads return nothing without a
+  // shop_id — a live-data concern. Mock mode has no RLS, so forcing its
+  // users through onboarding would gate them on a database they don't use.
+  if (DATA_SOURCE === 'supabase') {
+    // The shop decision must wait for the profile row, not run on its
+    // absence: right after sign-in the session exists a beat before the
+    // profile does, and deciding then would bounce a malik to /setup.
+    if (profileLoading) return <SessionLoading />;
+    if (!profile?.shop_id) return <Navigate to="/setup" replace />;
+  }
   return children;
 }
 
