@@ -347,6 +347,9 @@ export const translations = {
     'chart.empty': 'No entries in this period.',
     'chart.rs': 'Rs.',
 
+    'role.badgeMalik': 'Malik',
+    'role.badgeMunshi': 'Munshi',
+
     // Shared
     'common.search': 'Search…',
     'common.noParty': 'No party found',
@@ -702,6 +705,9 @@ export const translations = {
     'chart.cashFlowRange': 'کیش آمد بمقابلہ کیش ادائیگی',
     'chart.empty': 'اس عرصے میں کوئی اندراج نہیں۔',
     'chart.rs': 'Rs.',
+
+    'role.badgeMalik': 'مالک',
+    'role.badgeMunshi': 'منشی',
 
     // Shared
     'common.search': 'تلاش کریں…',

@@ -49,9 +49,7 @@ function LangToggle() {
   );
 }
 
-// Profile link plus sign-out, sitting beside the role switcher in the header.
-// The role switcher above is still the mock Malik/Munshi toggle from
-// AppContext; it is unrelated to profiles.role and stays that way for now.
+// Profile link plus sign-out.
 function UserMenu() {
   const { profile, user, signOut } = useAuth();
   const { showToast } = useApp();
@@ -92,8 +90,30 @@ function UserMenu() {
   );
 }
 
+// Read-only identity: who is signed in and what the profiles row says they
+// are. This replaced the mock-era dropdown that let anyone pick their own
+// role — role is data about the user, not a preference.
+function RoleBadge() {
+  const { profile, user } = useAuth();
+  const { role } = useApp();
+  const { t } = useLang();
+  const name = profile?.full_name || user?.email?.split('@')[0] || '';
+  return (
+    <span
+      className="hidden max-w-40 items-center gap-1.5 truncate rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-semibold text-gray-700 sm:inline-flex"
+      title={`${name} · ${t(role === 'malik' ? 'role.badgeMalik' : 'role.badgeMunshi')}`}
+    >
+      <span className="truncate">{name}</span>
+      <span className="text-gray-400">·</span>
+      <span className={role === 'malik' ? 'text-primary-700' : 'text-amber-700'}>
+        {t(role === 'malik' ? 'role.badgeMalik' : 'role.badgeMunshi')}
+      </span>
+    </span>
+  );
+}
+
 export default function Layout({ children }) {
-  const { role, setRole } = useApp();
+  const { role } = useApp();
   const { t } = useLang();
   const location = useLocation();
   const items = NAV.filter((n) => !n.ownerOnly || role === 'malik');
@@ -146,15 +166,7 @@ export default function Layout({ children }) {
         <span className="hidden text-lg font-bold text-gray-800 md:block">{current ? t(current.key) : ''}</span>
         <div className="flex items-center gap-2">
           <LangToggle />
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            aria-label={t('role.label')}
-            className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-800 outline-none focus:border-primary-500"
-          >
-            <option value="malik">{t('role.malik')}</option>
-            <option value="munshi">{t('role.munshi')}</option>
-          </select>
+          <RoleBadge />
           <UserMenu />
         </div>
       </header>

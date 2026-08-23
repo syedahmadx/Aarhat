@@ -16,7 +16,6 @@ const AppContext = createContext(null);
 // consistent with the rows on screen — same snapshot, same answer.
 
 export function AppProvider({ children }) {
-  const [role, setRole] = useState('malik'); // 'malik' | 'munshi'
   const [parties, setParties] = useState([]);
   const [fishTypes, setFishTypes] = useState([]);
   const [sales, setSales] = useState([]);
@@ -28,7 +27,18 @@ export function AppProvider({ children }) {
   // In supabase mode every read is RLS-scoped to the signed-in user's shop,
   // so the row set changes identity when the shop does (sign-in, sign-out,
   // onboarding). Mock mode ignores this and loads once.
-  const { shopId } = useAuth();
+  const { shopId, role: profileRole } = useAuth();
+
+  // The ONLY source of role is the signed-in user's profiles row. There is
+  // no setter: a user cannot choose their own role. Mock/demo sessions have
+  // no profile and run as malik so the demo stays fully usable.
+  const role = profileRole ?? 'malik';
+
+  // Mirror the role into the repo layer so repo.voidSale/voidCashEntry can
+  // refuse a munshi even if a future caller bypasses this context.
+  useEffect(() => {
+    repo.setActiveRole(role);
+  }, [role]);
 
   const mounted = useRef(true);
   const loadSeq = useRef(0);
@@ -159,7 +169,7 @@ export function AppProvider({ children }) {
 
   const value = useMemo(
     () => ({
-      role, setRole,
+      role,
       parties, fishTypes, sales, cashEntries,
       loading, error, reload,
       partyById, partyBalance, partyLedger,

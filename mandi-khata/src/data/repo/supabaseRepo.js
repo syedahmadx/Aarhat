@@ -53,7 +53,7 @@ function throwIf(error) {
 
 // shop_id for inserts. Cached per user id: it cannot change mid-session
 // except through onboarding, which reloads the app's data layer anyway.
-let shopCache = { userId: null, shopId: null };
+let shopCache = { userId: null, shopId: null, role: null };
 
 async function callerIds() {
   const { data, error } = await supabase.auth.getUser();
@@ -61,17 +61,17 @@ async function callerIds() {
   const userId = data.user?.id;
   if (!userId) throw new Error('not signed in');
   if (shopCache.userId === userId && shopCache.shopId) {
-    return { userId, shopId: shopCache.shopId };
+    return { userId, shopId: shopCache.shopId, role: shopCache.role };
   }
   const { data: prof, error: pErr } = await supabase
     .from('profiles')
-    .select('shop_id')
+    .select('shop_id, role')
     .eq('id', userId)
     .maybeSingle();
   throwIf(pErr);
   if (!prof?.shop_id) throw new Error('no shop for this user — onboarding has not run');
-  shopCache = { userId, shopId: prof.shop_id };
-  return { userId, shopId: prof.shop_id };
+  shopCache = { userId, shopId: prof.shop_id, role: prof.role };
+  return { userId, shopId: prof.shop_id, role: prof.role };
 }
 
 // ---------- row mappers (snake -> camel, sign convention applied) ----------
@@ -354,7 +354,10 @@ export async function allocateWasooli({ partyId, amountPaisa, cashEntryId }) {
  * deleted; there is no delete policy to even try against.
  */
 export async function voidSale(id) {
-  const { userId, shopId } = await callerIds();
+  const { userId, shopId, role } = await callerIds();
+  // The database-held role, not the client's word for it. RLS (0005)
+  // enforces the same rule even against a hand-rolled client.
+  if (role !== 'malik') throw new Error('only malik can void entries');
   const { data: orig, error } = await supabase
     .from('sales')
     .select('*, sale_expenses(type, amount_paisa, borne_by)')
@@ -414,7 +417,8 @@ export async function voidSale(id) {
 }
 
 export async function voidCashEntry(id) {
-  const { userId, shopId } = await callerIds();
+  const { userId, shopId, role } = await callerIds();
+  if (role !== 'malik') throw new Error('only malik can void entries');
   const { data: orig, error } = await supabase
     .from('cash_entries')
     .select('*')
