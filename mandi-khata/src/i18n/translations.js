@@ -339,6 +339,14 @@ export const translations = {
     'roz.prev': 'Previous page',
     'roz.next': 'Next page',
 
+    // A4 stage 3: charts
+    'chart.salesByFish7': 'Sales by fish type — last 7 days',
+    'chart.cashFlow14': 'Cash in vs cash out — last 14 days',
+    'chart.salesByFishRange': 'Sales by fish type',
+    'chart.cashFlowRange': 'Cash in vs cash out',
+    'chart.empty': 'No entries in this period.',
+    'chart.rs': 'Rs.',
+
     // Shared
     'common.search': 'Search…',
     'common.noParty': 'No party found',
@@ -686,6 +694,14 @@ export const translations = {
     'roz.pageOf': 'صفحہ {page} از {pages}',
     'roz.prev': 'پچھلا صفحہ',
     'roz.next': 'اگلا صفحہ',
+
+    // A4 stage 3: charts
+    'chart.salesByFish7': 'مچھلی کی قسم کے حساب سے سیل — آخری 7 دن',
+    'chart.cashFlow14': 'کیش آمد بمقابلہ کیش ادائیگی — آخری 14 دن',
+    'chart.salesByFishRange': 'مچھلی کی قسم کے حساب سے سیل',
+    'chart.cashFlowRange': 'کیش آمد بمقابلہ کیش ادائیگی',
+    'chart.empty': 'اس عرصے میں کوئی اندراج نہیں۔',
+    'chart.rs': 'Rs.',
 
     // Shared
     'common.search': 'تلاش کریں…',
