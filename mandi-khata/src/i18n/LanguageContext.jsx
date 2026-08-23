@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { translations, MONTHS, MERIDIEM } from './translations';
 import { formatPKR, formatKg } from '../utils/money';
+import { displayName } from '../utils/displayName';
 
 const LanguageContext = createContext(null);
 
@@ -72,12 +73,13 @@ export function LanguageProvider({ children }) {
     };
   }, [lang]);
 
-  // Party names and areas carry an Urdu spelling in the mock data.
-  const partyName = useCallback((p) => (p ? (lang === 'ur' ? p.nameUr : p.name) : ''), [lang]);
-  // Fish types are per-shop rows now, so their names are data, not i18n keys.
-  const fishName = useCallback((f) => (f ? (lang === 'ur' ? f.nameUr || f.name : f.name) : ''), [lang]);
-  const partyArea = useCallback((p) => (p ? (lang === 'ur' ? p.areaUr : p.area) : ''), [lang]);
-  const cashNote = useCallback((c) => (c ? (lang === 'ur' ? c.noteUr || c.note : c.note) : ''), [lang]);
+  // Names are data, not i18n keys, and Urdu spellings are optional on live
+  // rows — all of these go through displayName so a missing Urdu name falls
+  // back to the English one instead of rendering null.
+  const partyName = useCallback((p) => displayName(p, lang), [lang]);
+  const fishName = useCallback((f) => displayName(f, lang), [lang]);
+  const partyArea = useCallback((p) => (p ? displayName({ name: p.area, nameUr: p.areaUr }, lang) : ''), [lang]);
+  const cashNote = useCallback((c) => (c ? displayName({ name: c.note, nameUr: c.noteUr }, lang) : ''), [lang]);
 
   const value = useMemo(
     () => ({ lang, setLang, dir, t, fmt, partyName, partyArea, cashNote, fishName }),
