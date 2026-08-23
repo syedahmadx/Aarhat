@@ -319,6 +319,34 @@ export const translations = {
     'empty.dashSub': 'New sales and cash entries will show up here.',
     'empty.firstSale': 'Enter First Sale',
 
+    // Khata list: filters, sort, counts (A4 stage 1)
+    'khata.balanceFilter': 'Balance',
+    'khata.sortLabel': 'Sort',
+    'khata.sortName': 'Name',
+    'khata.sortBalance': 'Balance',
+    'khata.count': '{shown} of {total} parties',
+    'khata.reset': 'Reset Filters',
+    'khata.noMatchTitle': 'No parties match these filters',
+    'khata.noMatchSub': 'Loosen the filters or reset them to see every party.',
+    'khata.chipSearch': 'Search: {q}',
+
+    // A4 stage 2: nav groups, breadcrumbs, pagination
+    'nav.groupDaily': 'Daily',
+    'nav.groupAccounts': 'Accounts',
+    'crumb.back': 'Back',
+    'roz.entriesCount': '{n} entries',
+    'roz.pageOf': 'Page {page} of {pages}',
+    'roz.prev': 'Previous page',
+    'roz.next': 'Next page',
+
+    // A4 stage 3: charts
+    'chart.salesByFish7': 'Sales by fish type — last 7 days',
+    'chart.cashFlow14': 'Cash in vs cash out — last 14 days',
+    'chart.salesByFishRange': 'Sales by fish type',
+    'chart.cashFlowRange': 'Cash in vs cash out',
+    'chart.empty': 'No entries in this period.',
+    'chart.rs': 'Rs.',
+
     // Shared
     'common.search': 'Search…',
     'common.noParty': 'No party found',
@@ -646,6 +674,34 @@ export const translations = {
     'empty.dashTitle': 'اس دن کا کوئی اندراج نہیں',
     'empty.dashSub': 'نئی سیل اور کیش انٹریاں یہاں نظر آئیں گی۔',
     'empty.firstSale': 'پہلی سیل درج کریں',
+
+    // Khata list: filters, sort, counts (A4 stage 1)
+    'khata.balanceFilter': 'بیلنس',
+    'khata.sortLabel': 'ترتیب',
+    'khata.sortName': 'نام',
+    'khata.sortBalance': 'بیلنس',
+    'khata.count': '{total} میں سے {shown} پارٹیاں',
+    'khata.reset': 'فلٹر صاف کریں',
+    'khata.noMatchTitle': 'ان فلٹرز پر کوئی پارٹی پوری نہیں اترتی',
+    'khata.noMatchSub': 'فلٹر نرم کریں یا صاف کر کے تمام پارٹیاں دیکھیں۔',
+    'khata.chipSearch': 'تلاش: {q}',
+
+    // A4 stage 2: nav groups, breadcrumbs, pagination
+    'nav.groupDaily': 'روزانہ',
+    'nav.groupAccounts': 'حسابات',
+    'crumb.back': 'واپس',
+    'roz.entriesCount': '{n} اندراجات',
+    'roz.pageOf': 'صفحہ {page} از {pages}',
+    'roz.prev': 'پچھلا صفحہ',
+    'roz.next': 'اگلا صفحہ',
+
+    // A4 stage 3: charts
+    'chart.salesByFish7': 'مچھلی کی قسم کے حساب سے سیل — آخری 7 دن',
+    'chart.cashFlow14': 'کیش آمد بمقابلہ کیش ادائیگی — آخری 14 دن',
+    'chart.salesByFishRange': 'مچھلی کی قسم کے حساب سے سیل',
+    'chart.cashFlowRange': 'کیش آمد بمقابلہ کیش ادائیگی',
+    'chart.empty': 'اس عرصے میں کوئی اندراج نہیں۔',
+    'chart.rs': 'Rs.',
 
     // Shared
     'common.search': 'تلاش کریں…',

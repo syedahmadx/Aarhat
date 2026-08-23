@@ -1,13 +1,13 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useLang } from '../i18n/LanguageContext';
 import TypeBadge from '../components/TypeBadge';
 import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
+import Breadcrumbs from '../components/Breadcrumbs';
 
 export default function KhataDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { partyById, partyBalance, partyLedger } = useApp();
   const { t, fmt, partyName, partyArea, cashNote, fishName } = useLang();
 
@@ -46,10 +46,7 @@ export default function KhataDetail() {
 
   return (
     <div className="space-y-4">
-      <button onClick={() => navigate('/khatas')} className="flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:text-primary-900">
-        <svg className="h-4 w-4 rtl:rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
-        {t('kd.backToList')}
-      </button>
+      <Breadcrumbs items={[{ label: t('nav.khatas'), to: '/khatas' }]} current={partyName(party)} />
 
       <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">

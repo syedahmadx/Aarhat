@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useLang } from '../i18n/LanguageContext';
 import { todayISO, daysAgoISO } from '../utils/format';
 import EmptyState from '../components/EmptyState';
+import { SalesByFishChart, CashFlowChart } from '../components/charts/LedgerCharts';
 
 export default function Reports() {
   const { sales, cashEntries } = useApp();
@@ -91,6 +92,11 @@ export default function Reports() {
               <p className="text-xs font-medium text-gray-500">{t('rep.cashOut')}</p>
               <p className="latin mt-1 text-lg font-bold text-red-600">{fmt.rs(data.cashOut)}</p>
             </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <SalesByFishChart sales={sales} fromISO={from} toISO={to} title={t('chart.salesByFishRange')} />
+            <CashFlowChart cashEntries={cashEntries} fromISO={from} toISO={to} title={t('chart.cashFlowRange')} />
           </div>
 
           <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">

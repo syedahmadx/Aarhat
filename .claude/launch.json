@@ -4,8 +4,30 @@
     {
       "name": "mandi-khata",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "mandi-khata"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "mandi-khata"
+      ],
       "port": 5173
+    },
+    {
+      "name": "mandi-khata-mock",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "mandi-khata",
+        "--",
+        "--mode",
+        "mock",
+        "--port",
+        "5299",
+        "--strictPort"
+      ],
+      "port": 5299
     }
   ]
 }

@@ -17,7 +17,9 @@ export default function SignIn() {
   const location = useLocation();
 
   // Where the user was headed before being bounced here, if anywhere.
-  const redirectTo = location.state?.from?.pathname || '/dashboard';
+  // Keep the query string: filters on the khata list live in it.
+  const from = location.state?.from;
+  const redirectTo = from ? `${from.pathname}${from.search || ''}` : '/dashboard';
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
