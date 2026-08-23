@@ -16,16 +16,36 @@ if (import.meta.env.VITE_DATA_SOURCE === 'supabase') {
 
 export const DATA_SOURCE = impl === mockRepo ? 'mock' : 'supabase';
 
+// The caller's role, mirrored in by AppContext from the signed-in profile.
+// Voiding rewrites financial history, so the repo refuses it for anyone but
+// the malik — in addition to the UI hiding the controls and, in supabase
+// mode, RLS refusing the contra row server-side (migration 0005).
+let activeRole = 'malik';
+export const setActiveRole = (role) => {
+  activeRole = role || 'malik';
+};
+function assertMalik() {
+  if (activeRole !== 'malik') {
+    throw new Error('only malik can void entries');
+  }
+}
+
 export const listParties = (...args) => impl.listParties(...args);
 export const addParty = (...args) => impl.addParty(...args);
 export const mergeParty = (...args) => impl.mergeParty(...args);
 export const listFishTypes = (...args) => impl.listFishTypes(...args);
 export const listSales = (...args) => impl.listSales(...args);
 export const addSale = (...args) => impl.addSale(...args);
-export const voidSale = (...args) => impl.voidSale(...args);
+export const voidSale = (...args) => {
+  assertMalik();
+  return impl.voidSale(...args);
+};
 export const listCashEntries = (...args) => impl.listCashEntries(...args);
 export const addCashEntry = (...args) => impl.addCashEntry(...args);
-export const voidCashEntry = (...args) => impl.voidCashEntry(...args);
+export const voidCashEntry = (...args) => {
+  assertMalik();
+  return impl.voidCashEntry(...args);
+};
 export const allocateWasooli = (...args) => impl.allocateWasooli(...args);
 export const partyBalance = (...args) => impl.partyBalance(...args);
 export const partyLedger = (...args) => impl.partyLedger(...args);

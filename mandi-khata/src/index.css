@@ -39,6 +39,16 @@ body { background-color: #f4f6f8; }
   line-height: 1.85;
 }
 
+/* Headings get extra line height in RTL: Arabic-script faces carry taller
+   ascenders than the Latin line boxes Tailwind's text-xl assumes, and a
+   tight box visually clips the top of titles (the Roznamcha heading) under
+   the fixed top bar. */
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3 {
+  line-height: 1.6;
+}
+
 /* Keep Latin-script content (amounts, gaari numbers, phone numbers, dates)
    in Inter even while the surrounding UI is Nastaliq. */
 .latin { font-family: var(--font-sans); line-height: 1.4; }
